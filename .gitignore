@@ -94,3 +94,5 @@ swloop_results.xml
 swloop.log
 
 .vscode/
+
+mono_crash.*

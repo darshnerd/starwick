@@ -10,6 +10,7 @@ namespace Starwick
         public static AudioSource Ambient;
         public static Companion Companion;
         public static AudioSource Motif;
+        public static Constellation Constellation;
         public static bool Booted;
         public static bool AmbientStarted;
         public static bool MotifStarted;

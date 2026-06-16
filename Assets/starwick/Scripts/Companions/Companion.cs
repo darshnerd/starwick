@@ -10,8 +10,14 @@ namespace Starwick
         public float orbitSpeed = 16f;
         public float bob = 0.6f;
         public float distance = 9f;
+        public float TapRadiusPixels = 90f;
+
+        public int TapCount { get; private set; }
 
         float angle;
+        bool wasDown;
+        float motifBase = 0.32f;
+        float swell;
 
         void Awake()
         {
@@ -60,7 +66,25 @@ namespace Starwick
                 var offset = cam.right * (Mathf.Cos(rad) * orbitRadius)
                            + cam.up * (Mathf.Sin(rad) * orbitRadius * 0.4f + Mathf.Sin(Time.time * 1.3f) * bob);
                 transform.position = Vector3.Lerp(transform.position, basePos + offset, Time.deltaTime * 2f);
+
+                bool down = InputService.PointerDown;
+                if (down && !wasDown)
+                {
+                    var sp = cam.GetComponent<Camera>() != null ? Sw.Cam.WorldToScreenPoint(transform.position) : Vector3.zero;
+                    if (sp.z > 0f && Vector2.Distance(InputService.PointerPosition, sp) < TapRadiusPixels)
+                        React();
+                }
+                wasDown = down;
             }
+
+            if (swell > 0f) swell = Mathf.Max(0f, swell - Time.deltaTime * 0.6f);
+            if (Sw.Motif != null) Sw.Motif.volume = motifBase + swell * 0.35f;
+        }
+
+        public void React()
+        {
+            TapCount++;
+            swell = 1f;
         }
     }
 }

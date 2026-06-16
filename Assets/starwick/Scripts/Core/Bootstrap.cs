@@ -14,6 +14,8 @@ namespace Starwick
             foreach (var listener in Object.FindObjectsByType<AudioListener>(FindObjectsInactive.Include))
                 Object.Destroy(listener);
 
+            GameState.Reset();
+
             var root = new GameObject("Starwick");
             Object.DontDestroyOnLoad(root);
             Sw.Root = root;
@@ -61,6 +63,12 @@ namespace Starwick
             motifSrc.Play();
             Sw.Motif = motifSrc;
             Sw.MotifStarted = true;
+
+            var conGo = new GameObject("Constellation");
+            conGo.transform.SetParent(camGo.transform, false);
+            conGo.transform.localPosition = new Vector3(0f, 0f, 14f);
+            conGo.transform.localRotation = Quaternion.identity;
+            Sw.Constellation = conGo.AddComponent<Constellation>();
 
             root.AddComponent<SwTestHarness>();
             Sw.Booted = true;
