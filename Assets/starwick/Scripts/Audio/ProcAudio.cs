@@ -23,5 +23,26 @@ namespace Starwick
             clip.SetData(data, 0);
             return clip;
         }
+
+        public static AudioClip Motif(int seconds = 8, int sampleRate = 44100)
+        {
+            int n = seconds * sampleRate;
+            var data = new float[n];
+            float[] notes = { 523.25f, 659.25f, 783.99f, 659.25f, 587.33f, 783.99f, 1046.5f, 783.99f };
+            float noteLen = (float)seconds / notes.Length;
+            for (int i = 0; i < n; i++)
+            {
+                float t = (float)i / sampleRate;
+                int idx = Mathf.Clamp((int)(t / noteLen), 0, notes.Length - 1);
+                float local = t - idx * noteLen;
+                float env = Mathf.Exp(-local * 2.2f) * Mathf.Clamp01(local * 30f);
+                float f = notes[idx];
+                float s = Mathf.Sin(2f * Mathf.PI * f * t) * 0.6f + Mathf.Sin(2f * Mathf.PI * f * 2f * t) * 0.2f;
+                data[i] = s * env * 0.2f;
+            }
+            var clip = AudioClip.Create("VespMotif", n, 1, sampleRate, false);
+            clip.SetData(data, 0);
+            return clip;
+        }
     }
 }

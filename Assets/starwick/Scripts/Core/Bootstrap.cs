@@ -49,6 +49,19 @@ namespace Starwick
             Sw.Ambient = src;
             Sw.AmbientStarted = true;
 
+            var vespGo = new GameObject("Vesp");
+            vespGo.transform.SetParent(root.transform);
+            vespGo.transform.position = new Vector3(3f, 0f, -4f);
+            Sw.Companion = vespGo.AddComponent<Companion>();
+            var motifSrc = vespGo.AddComponent<AudioSource>();
+            motifSrc.clip = ProcAudio.Motif();
+            motifSrc.loop = true;
+            motifSrc.spatialBlend = 0f;
+            motifSrc.volume = 0.32f;
+            motifSrc.Play();
+            Sw.Motif = motifSrc;
+            Sw.MotifStarted = true;
+
             root.AddComponent<SwTestHarness>();
             Sw.Booted = true;
         }
