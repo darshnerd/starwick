@@ -6,6 +6,8 @@ namespace Starwick
     public class Constellation : MonoBehaviour
     {
         public float TraceRadiusPixels = 70f;
+        public bool FaceCamera;
+        public int SiteIndex;
 
         public bool Complete { get; private set; }
         public int NodeCount => local.Count;
@@ -55,6 +57,14 @@ namespace Starwick
 
         void Update()
         {
+            if (FaceCamera && Sw.Cam != null)
+            {
+                Vector3 to = Sw.Cam.transform.position - transform.position;
+                to.y = 0f;
+                if (to.sqrMagnitude > 0.01f)
+                    transform.rotation = Quaternion.LookRotation(to.normalized, Vector3.up);
+            }
+
             if (!Complete && !InputService.UiBlocking && Sw.Cam != null && InputService.PointerDown)
             {
                 int next = TracedCount;

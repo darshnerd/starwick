@@ -30,19 +30,33 @@ namespace Starwick.Tests
 
             InputService.UseSynthetic = true;
             InputService.SyntheticPointerDown = false;
-            InputService.SyntheticPointer = new Vector2(Screen.width * 0.8f, Screen.height * 0.42f);
+            InputService.SyntheticPointer = new Vector2(Screen.width * 0.7f, Screen.height * 0.41f);
             yield return null;
             yield return null;
             InputService.SyntheticPointerDown = true;
             yield return null;
             yield return null;
             InputService.SyntheticPointerDown = false;
+
+            int rightPick = picked;
+
+            picked = 0;
+            Sw.Narration.ShowChoices("Again?", "Let it rest", "Send it onward", i => picked = i);
+            yield return null;
+            InputService.SyntheticPointer = new Vector2(Screen.width * 0.5f, Screen.height * 0.41f);
+            InputService.SyntheticPointerDown = true;
+            yield return null;
+            yield return null;
+            InputService.SyntheticPointerDown = false;
+            int gapPick = picked;
+            if (Sw.Narration.ChoiceActive) Sw.Narration.HideChoices();
+
             InputService.UseSynthetic = false;
 
-            Assert.AreEqual(2, picked, "right-side tap should select choice 2");
-            Assert.IsFalse(Sw.Narration.ChoiceActive, "choice UI should hide after a pick");
+            Assert.AreEqual(2, rightPick, "tap inside the right button should select choice 2");
+            Assert.AreEqual(0, gapPick, "tap between the buttons should select nothing");
 
-            Debug.Log($"[swloop] m5b picked={picked}");
+            Debug.Log($"[swloop] m5b rightPick={rightPick} gapPick={gapPick}");
         }
 
         IEnumerator Capture(string path)

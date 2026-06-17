@@ -17,7 +17,7 @@ namespace Starwick
         {
             while (true)
             {
-                while (Sw.Constellation == null || !Sw.Constellation.Complete) yield return null;
+                while (Sw.Decor == null || !Sw.Decor.AllSitesLit) yield return null;
 
                 if (Sw.Dialogue != null) Sw.Dialogue.Play(StoryData.FirstConstellation());
                 if (Sw.PostFx != null) Sw.PostFx.SetMoodWarm(0.6f);
@@ -38,11 +38,14 @@ namespace Starwick
                 restart = false;
                 if (Sw.Dialogue != null) Sw.Dialogue.Play(StoryData.BeginAgain());
                 yield return WaitDialogue();
+                if (Sw.Narration != null)
+                    Sw.Narration.ShowPrompt("The sky waits to turn again.", "Begin again", RequestRestart);
                 while (!restart) yield return null;
+                if (Sw.Narration != null) Sw.Narration.HideChoices();
 
                 GameState.Reset();
                 if (Sw.PostFx != null) Sw.PostFx.SetMoodWarm(0.45f);
-                if (Sw.Constellation != null) Sw.Constellation.ResetForReplay();
+                if (Sw.Decor != null) Sw.Decor.ResetSites();
                 Chosen = 0;
             }
         }

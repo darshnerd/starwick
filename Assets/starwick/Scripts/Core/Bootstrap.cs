@@ -20,9 +20,13 @@ namespace Starwick
             Object.DontDestroyOnLoad(root);
             Sw.Root = root;
 
+            var realmGo = new GameObject("GroundRealm");
+            realmGo.transform.SetParent(root.transform);
+            Sw.Realm = realmGo.AddComponent<GroundRealm>();
+
             var camGo = new GameObject("CameraRig");
             camGo.transform.SetParent(root.transform);
-            camGo.transform.position = new Vector3(0f, 0f, -10f);
+            camGo.transform.position = new Vector3(0f, 8f, 0f);
             var cam = camGo.AddComponent<Camera>();
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.015f, 0.02f, 0.05f);
@@ -74,10 +78,17 @@ namespace Starwick
             Sw.Dialogue = dlgGo.AddComponent<DialogueSystem>();
 
             var conGo = new GameObject("Constellation");
-            conGo.transform.SetParent(camGo.transform, false);
-            conGo.transform.localPosition = new Vector3(0f, 0f, 14f);
-            conGo.transform.localRotation = Quaternion.identity;
+            conGo.transform.SetParent(root.transform);
+            var sites = Sw.Realm != null ? Sw.Realm.Sites : null;
+            var site0 = (sites != null && sites.Length > 0) ? sites[0] : Vector3.zero;
+            conGo.transform.position = site0 + Vector3.up * 7f;
             Sw.Constellation = conGo.AddComponent<Constellation>();
+            Sw.Constellation.FaceCamera = true;
+            Sw.Constellation.SiteIndex = 0;
+
+            var decorGo = new GameObject("RealmDecor");
+            decorGo.transform.SetParent(root.transform);
+            decorGo.AddComponent<RealmDecor>();
 
             var uiGo = new GameObject("NarrationUI");
             uiGo.transform.SetParent(root.transform);
@@ -90,6 +101,10 @@ namespace Starwick
             var dirGo = new GameObject("Director");
             dirGo.transform.SetParent(root.transform);
             Sw.Director = dirGo.AddComponent<Director>();
+
+            var audioMgrGo = new GameObject("AudioManager");
+            audioMgrGo.transform.SetParent(root.transform);
+            audioMgrGo.AddComponent<AudioManager>();
 
             root.AddComponent<SwTestHarness>();
             Sw.Booted = true;

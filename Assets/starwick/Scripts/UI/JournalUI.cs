@@ -29,21 +29,19 @@ namespace Starwick
 
             gameObject.AddComponent<GraphicRaycaster>();
 
-            var font = TMP_Settings.defaultFontAsset;
-
-            indicator = MakeText("Indicator", font, 30f, FontStyles.Normal,
+            indicator = MakeText("Indicator", Typeface.HeadingMedium, 28f, FontStyles.Normal,
                 new Color(1.9f, 1.6f, 2.3f, 1f), TextAlignmentOptions.Right,
                 new Vector2(0.9f, 0.93f), new Vector2(420f, 44f));
 
             panel = MakeImage("Panel", new Color(0.01f, 0.0f, 0.04f, 0.88f),
                 new Vector2(0.5f, 0.5f), new Vector2(1320f, 780f));
 
-            title = MakeText("Title", font, 54f, FontStyles.Italic,
+            title = MakeText("Title", Typeface.Heading, 56f, FontStyles.Normal,
                 new Color(2.1f, 1.8f, 1.1f, 1f), TextAlignmentOptions.Top,
                 new Vector2(0.5f, 0.8f), new Vector2(1200f, 90f));
             title.text = "Memories";
 
-            list = MakeText("List", font, 32f, FontStyles.Normal,
+            list = MakeText("List", Typeface.Body, 30f, FontStyles.Normal,
                 Color.white, TextAlignmentOptions.TopLeft,
                 new Vector2(0.5f, 0.44f), new Vector2(1180f, 560f));
 
@@ -56,7 +54,7 @@ namespace Starwick
             if (n != shownCount)
             {
                 shownCount = n;
-                if (indicator != null) indicator.text = n + " memories";
+                if (indicator != null) indicator.text = n == 1 ? "1 memory" : n + " memories";
                 if (IsOpen) Refresh();
             }
 

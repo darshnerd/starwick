@@ -117,8 +117,6 @@ namespace Starwick
             float s = 0.5f * (1f + Mathf.Sin(t * 4f) * 0.05f + excite * 0.5f);
             if (core != null) core.localScale = Vector3.one * s;
             if (halo != null) halo.Rotate(0f, (70f + excite * 360f) * dt, 0f, Space.Self);
-
-            if (Sw.Motif != null) Sw.Motif.volume = motifBase + excite * 0.35f;
         }
 
         public void React()

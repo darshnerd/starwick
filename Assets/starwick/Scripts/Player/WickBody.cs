@@ -21,6 +21,7 @@ namespace Starwick
 
         Vector3 lastCamPos;
         float relightT = -2f;
+        float vis = 1f;
 
         void Awake()
         {
@@ -94,8 +95,12 @@ namespace Starwick
             Vector3 leanTarget = Vector3.ClampMagnitude(new Vector3(-localVel.x, 0f, -localVel.z) * 0.04f, 0.5f);
             lean.Step(leanTarget, 60f, 12f, dt);
 
+            float visTarget = InputService.UiBlocking ? 0f : 1f;
+            vis = Mathf.MoveTowards(vis, visTarget, dt * 4f);
+
             body.localPosition = new Vector3(lean.value.x, hover.value + lean.value.y, lean.value.z);
             body.localRotation = Quaternion.Euler(lean.value.z * 40f, 0f, -lean.value.x * 40f);
+            body.localScale = Vector3.one * vis;
 
             float flare = 0f;
             if (relightT > -1f)
@@ -107,7 +112,7 @@ namespace Starwick
 
             pulse.Step(1f + Mathf.Sin(t * 5f) * 0.04f + flare * 0.6f, 120f, 16f, dt);
             if (ember != null) ember.localScale = Vector3.one * 0.34f * pulse.value;
-            if (flame != null) flame.intensity = 5f + Mathf.Sin(t * 11f) * 0.6f + flare * 6f;
+            if (flame != null) flame.intensity = (5f + Mathf.Sin(t * 11f) * 0.6f + flare * 6f) * vis;
 
             for (int i = 0; i < rings.Count; i++)
             {

@@ -20,6 +20,7 @@ namespace Starwick
         TMP_Text choiceA;
         TMP_Text choiceB;
         bool choiceActive;
+        bool singleButton;
         System.Action<int> onChoice;
 
         public bool ChoiceActive => choiceActive;
@@ -37,35 +38,33 @@ namespace Starwick
 
             gameObject.AddComponent<GraphicRaycaster>();
 
-            var font = TMP_Settings.defaultFontAsset;
-
-            backdrop = MakeImage("Backdrop", new Color(0f, 0f, 0.02f, 0.55f),
+            backdrop = MakeImage("Backdrop", new Color(0f, 0f, 0.02f, 0.88f),
                 new Vector2(0.5f, 0.17f), new Vector2(1500f, 260f));
 
-            speaker = MakeText("Speaker", font, 34f, FontStyles.Italic,
+            speaker = MakeText("Speaker", Typeface.HeadingMedium, 32f, FontStyles.Normal,
                 new Color(1.7f, 1.5f, 2.2f, 1f), TextAlignmentOptions.Center,
                 new Vector2(0.5f, 0.27f), new Vector2(1400f, 50f));
 
-            body = MakeText("Body", font, 40f, FontStyles.Normal,
+            body = MakeText("Body", Typeface.Body, 38f, FontStyles.Normal,
                 Color.white, TextAlignmentOptions.Center,
                 new Vector2(0.5f, 0.155f), new Vector2(1400f, 190f));
 
-            choiceBackdrop = MakeImage("ChoiceBackdrop", new Color(0f, 0f, 0.02f, 0.62f),
+            choiceBackdrop = MakeImage("ChoiceBackdrop", new Color(0f, 0f, 0.02f, 0.92f),
                 new Vector2(0.5f, 0.49f), new Vector2(1480f, 440f));
 
-            choicePrompt = MakeText("ChoicePrompt", font, 44f, FontStyles.Italic,
+            choicePrompt = MakeText("ChoicePrompt", Typeface.Heading, 44f, FontStyles.Italic,
                 new Color(1.7f, 1.55f, 2.2f, 1f), TextAlignmentOptions.Center,
                 new Vector2(0.5f, 0.63f), new Vector2(1320f, 150f));
 
             choiceBoxA = MakeImage("ChoiceBoxA", new Color(0.12f, 0.14f, 0.3f, 0.88f),
                 new Vector2(0.3f, 0.41f), new Vector2(540f, 120f));
-            choiceA = MakeText("ChoiceA", font, 36f, FontStyles.Normal,
+            choiceA = MakeText("ChoiceA", Typeface.BodyMedium, 36f, FontStyles.Normal,
                 Color.white, TextAlignmentOptions.Center,
                 new Vector2(0.3f, 0.41f), new Vector2(500f, 110f));
 
             choiceBoxB = MakeImage("ChoiceBoxB", new Color(0.12f, 0.14f, 0.3f, 0.88f),
                 new Vector2(0.7f, 0.41f), new Vector2(540f, 120f));
-            choiceB = MakeText("ChoiceB", font, 36f, FontStyles.Normal,
+            choiceB = MakeText("ChoiceB", Typeface.BodyMedium, 36f, FontStyles.Normal,
                 Color.white, TextAlignmentOptions.Center,
                 new Vector2(0.7f, 0.41f), new Vector2(500f, 110f));
 
@@ -96,10 +95,21 @@ namespace Starwick
 
         public void ShowChoices(string prompt, string a, string b, System.Action<int> cb)
         {
+            LayoutButtons(false);
             choicePrompt.text = prompt;
             choiceA.text = a;
             choiceB.text = b;
             onChoice = cb;
+            choiceActive = true;
+            SetChoiceVisible(true);
+        }
+
+        public void ShowPrompt(string prompt, string label, System.Action cb)
+        {
+            LayoutButtons(true);
+            choicePrompt.text = prompt;
+            choiceA.text = label;
+            onChoice = i => { if (i == 1) cb?.Invoke(); };
             choiceActive = true;
             SetChoiceVisible(true);
         }
@@ -136,13 +146,39 @@ namespace Starwick
                 }
                 else if (choiceActive)
                 {
-                    var cb = onChoice;
-                    int side = InputService.PointerPosition.x < Screen.width * 0.5f ? 1 : 2;
-                    HideChoices();
-                    cb?.Invoke(side);
+                    Vector2 p = InputService.PointerPosition;
+                    int side = 0;
+                    if (choiceBoxA != null && choiceBoxA.enabled &&
+                        RectTransformUtility.RectangleContainsScreenPoint(choiceBoxA.rectTransform, p, Sw.Cam))
+                        side = 1;
+                    else if (choiceBoxB != null && choiceBoxB.enabled &&
+                        RectTransformUtility.RectangleContainsScreenPoint(choiceBoxB.rectTransform, p, Sw.Cam))
+                        side = 2;
+
+                    if (side != 0)
+                    {
+                        var cb = onChoice;
+                        HideChoices();
+                        cb?.Invoke(side);
+                    }
                 }
             }
             wasDown = down;
+        }
+
+        void LayoutButtons(bool single)
+        {
+            singleButton = single;
+            float ax = single ? 0.5f : 0.3f;
+            SetAnchorX(choiceBoxA.rectTransform, ax);
+            SetAnchorX(choiceA.rectTransform, ax);
+        }
+
+        void SetAnchorX(RectTransform rt, float x)
+        {
+            rt.anchorMin = new Vector2(x, rt.anchorMin.y);
+            rt.anchorMax = new Vector2(x, rt.anchorMax.y);
+            rt.anchoredPosition = Vector2.zero;
         }
 
         void SetVisible(bool v)
@@ -154,12 +190,13 @@ namespace Starwick
 
         void SetChoiceVisible(bool v)
         {
+            bool two = v && !singleButton;
             if (choiceBackdrop != null) choiceBackdrop.enabled = v;
-            if (choiceBoxA != null) choiceBoxA.enabled = v;
-            if (choiceBoxB != null) choiceBoxB.enabled = v;
             if (choicePrompt != null) choicePrompt.enabled = v;
+            if (choiceBoxA != null) choiceBoxA.enabled = v;
             if (choiceA != null) choiceA.enabled = v;
-            if (choiceB != null) choiceB.enabled = v;
+            if (choiceBoxB != null) choiceBoxB.enabled = two;
+            if (choiceB != null) choiceB.enabled = two;
         }
 
         Image MakeImage(string n, Color c, Vector2 anchor, Vector2 size)

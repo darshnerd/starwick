@@ -6,6 +6,8 @@ namespace Starwick
     {
         public static GameObject Root;
         public static Camera Cam;
+        public static GroundRealm Realm;
+        public static RealmDecor Decor;
         public static CosmosFx Cosmos;
         public static AudioSource Ambient;
         public static Companion Companion;
@@ -16,6 +18,7 @@ namespace Starwick
         public static JournalUI Journal;
         public static PostFx PostFx;
         public static Director Director;
+        public static AudioManager Audio;
         public static bool Booted;
         public static bool AmbientStarted;
         public static bool MotifStarted;

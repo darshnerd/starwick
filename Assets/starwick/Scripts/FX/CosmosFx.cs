@@ -9,9 +9,13 @@ namespace Starwick
         public int NebulaCount = 28;
         public float Radius = 120f;
 
+        public float ReactiveLevel { get; private set; }
+
         ParticleSystem stars;
         ParticleSystem twinkle;
         ParticleSystem nebula;
+        Material starMat;
+        Material twinkleMat;
 
         public int ActiveStars => stars != null ? stars.particleCount : 0;
         public int ActiveNebula => nebula != null ? nebula.particleCount : 0;
@@ -25,14 +29,26 @@ namespace Starwick
             stars = NewLayer("Stars", StarCount, Radius, 0.12f, 0.7f,
                 new Color(2.0f, 1.85f, 1.6f, 1f), new Color(1.35f, 1.55f, 2.2f, 1f), dot, shader, false);
             stars.Emit(StarCount);
+            starMat = stars.GetComponent<ParticleSystemRenderer>().material;
 
             twinkle = NewLayer("Twinkle", TwinkleCount, Radius, 0.5f, 1.3f,
                 new Color(2.6f, 2.4f, 2.0f, 1f), new Color(1.7f, 2.0f, 2.8f, 1f), dot, shader, false);
             MakeTwinkle(twinkle, TwinkleCount);
+            twinkleMat = twinkle.GetComponent<ParticleSystemRenderer>().material;
 
             nebula = NewLayer("Nebula", NebulaCount, Radius * 0.78f, 40f, 95f,
                 new Color(0.75f, 0.35f, 1.0f, 0.32f), new Color(0.22f, 0.5f, 0.95f, 0.34f), cloud, shader, true);
             nebula.Emit(NebulaCount);
+        }
+
+        void Update()
+        {
+            float e = Sw.Audio != null ? Sw.Audio.Energy : 0f;
+            ReactiveLevel = Mathf.Lerp(ReactiveLevel, e, Mathf.Max(0.0001f, Time.deltaTime) * 3f);
+            float b = 0.85f + ReactiveLevel * 0.9f;
+            var c = new Color(b, b, b, 1f);
+            if (starMat != null) starMat.color = c;
+            if (twinkleMat != null) twinkleMat.color = c;
         }
 
         void MakeTwinkle(ParticleSystem ps, int count)

@@ -76,7 +76,7 @@ namespace Starwick
             if (Sw.Cam != null)
             {
                 baseFov = Sw.Cam.fieldOfView;
-                shock.rotation = Quaternion.LookRotation((Sw.Cam.transform.position - transform.position).normalized);
+                FaceCamera();
             }
 
             const float dur = 2.2f;
@@ -101,6 +101,7 @@ namespace Starwick
 
                 if (e >= 1.2f)
                 {
+                    FaceCamera();
                     float k = Mathf.Clamp01((e - 1.2f) / 0.8f);
                     shock.localScale = Vector3.one * Mathf.Lerp(0.2f, 7f, Ease.OutCubic(k));
                     var col = Warm;
@@ -124,6 +125,14 @@ namespace Starwick
             core.localScale = Vector3.zero;
             shock.localScale = Vector3.zero;
             if (Sw.Cam != null) Sw.Cam.fieldOfView = baseFov;
+        }
+
+        void FaceCamera()
+        {
+            if (Sw.Cam == null) return;
+            Vector3 dir = (Sw.Cam.transform.position - transform.position).normalized;
+            if (dir.sqrMagnitude > 0.0001f)
+                shock.rotation = Quaternion.FromToRotation(Vector3.up, dir);
         }
 
         void FireMotes()

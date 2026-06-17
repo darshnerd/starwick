@@ -4,44 +4,59 @@ namespace Starwick
 {
     public class CameraRig : MonoBehaviour
     {
-        public float MoveSpeed = 9f;
+        public float MoveSpeed = 6f;
         public float LookSpeed = 0.12f;
-        public float IdleDriftDegPerSec = 1.0f;
+        public float EyeHeight = 1.7f;
 
         float yaw;
         float pitch;
+        Spring groundY;
 
         void Start()
         {
             var e = transform.eulerAngles;
             yaw = e.y;
             pitch = e.x;
+            float gy = GroundY(transform.position);
+            groundY.value = gy;
+            groundY.velocity = 0f;
+            transform.position = new Vector3(transform.position.x, gy, transform.position.z);
+            transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
         }
 
         void Update()
         {
-            bool active = false;
+            float dt = Mathf.Max(0.0001f, Time.deltaTime);
 
             var look = InputService.LookDelta;
             if (look.sqrMagnitude > 0.0001f)
             {
                 yaw += look.x * LookSpeed;
-                pitch = Mathf.Clamp(pitch - look.y * LookSpeed, -80f, 80f);
-                active = true;
+                pitch = Mathf.Clamp(pitch - look.y * LookSpeed, -70f, 70f);
             }
 
-            var move = InputService.MoveAxis;
-            if (move.sqrMagnitude > 0.0001f)
+            if (!InputService.UiBlocking)
             {
-                var dir = transform.right * move.x + transform.forward * move.y;
-                transform.position += dir.normalized * MoveSpeed * Time.deltaTime;
-                active = true;
+                var move = InputService.MoveAxis;
+                if (move.sqrMagnitude > 0.0001f)
+                {
+                    var flat = Quaternion.Euler(0f, yaw, 0f);
+                    var dir = flat * new Vector3(move.x, 0f, move.y);
+                    if (dir.sqrMagnitude > 1f) dir.Normalize();
+                    var p = transform.position + dir * MoveSpeed * dt;
+                    transform.position = new Vector3(p.x, transform.position.y, p.z);
+                }
             }
 
-            if (!active)
-                yaw += IdleDriftDegPerSec * Time.deltaTime;
-
+            groundY.Step(GroundY(transform.position), 120f, 18f, dt);
+            transform.position = new Vector3(transform.position.x, groundY.value, transform.position.z);
             transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
+        }
+
+        float GroundY(Vector3 p)
+        {
+            float h = Sw.Realm != null ? Sw.Realm.Height(p.x, p.z) : 0f;
+            return h + EyeHeight;
         }
     }
 }
