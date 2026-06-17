@@ -15,6 +15,8 @@ namespace Starwick
                 Object.Destroy(listener);
 
             GameState.Reset();
+            SaveData.Load();
+            SaveData.MarkCompanionSeen(GameState.CompanionIndex);
 
             var root = new GameObject("Starwick");
             Object.DontDestroyOnLoad(root);
@@ -65,7 +67,7 @@ namespace Starwick
             vespGo.transform.position = new Vector3(3f, 0f, -4f);
             Sw.Companion = vespGo.AddComponent<Companion>();
             var motifSrc = vespGo.AddComponent<AudioSource>();
-            motifSrc.clip = ProcAudio.Motif();
+            motifSrc.clip = ProcAudio.Motif(Roster.Current.Pitch);
             motifSrc.loop = true;
             motifSrc.spatialBlend = 0f;
             motifSrc.volume = 0.32f;
@@ -98,6 +100,10 @@ namespace Starwick
             journalGo.transform.SetParent(root.transform);
             Sw.Journal = journalGo.AddComponent<JournalUI>();
 
+            var skyGo = new GameObject("ConstellariumUI");
+            skyGo.transform.SetParent(root.transform);
+            Sw.Constellarium = skyGo.AddComponent<ConstellariumUI>();
+
             var dirGo = new GameObject("Director");
             dirGo.transform.SetParent(root.transform);
             Sw.Director = dirGo.AddComponent<Director>();
@@ -105,6 +111,10 @@ namespace Starwick
             var audioMgrGo = new GameObject("AudioManager");
             audioMgrGo.transform.SetParent(root.transform);
             audioMgrGo.AddComponent<AudioManager>();
+
+            var sfxGo = new GameObject("SfxManager");
+            sfxGo.transform.SetParent(root.transform);
+            sfxGo.AddComponent<SfxManager>();
 
             root.AddComponent<SwTestHarness>();
             Sw.Booted = true;

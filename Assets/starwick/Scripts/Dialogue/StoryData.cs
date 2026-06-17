@@ -6,15 +6,19 @@ namespace Starwick
     {
         public static List<DialogueLine> FirstConstellation()
         {
-            return new List<DialogueLine>
-            {
-                new DialogueLine("", "A star has gone dark. You feel the absence before you see it."),
-                new DialogueLine("the Weave", "You are a Wick. You will relight what the dark has taken."),
-                new DialogueLine("Vesp", "...is that what we are? little lights, sent to mind the lights?"),
-                new DialogueLine("", "The shape answers your touch. A name surfaces, then a face you never met.",
-                    "The Ferryman's Lantern - one who lit the way for others across the dark, and was forgotten the moment they were no longer needed."),
-                new DialogueLine("the Weave", "The ember waits in your hands. What you give it now, it becomes."),
-            };
+            var lines = new List<DialogueLine>();
+
+            if (SaveData.RunsCompleted > 0)
+                lines.Add(new DialogueLine("Vesp", "you came back. the sky remembers you - and so do i."));
+
+            lines.Add(new DialogueLine("", "A star has gone dark. You feel the absence before you see it."));
+            lines.Add(new DialogueLine("the Weave", "You are a Wick. You will relight what the dark has taken."));
+            lines.Add(new DialogueLine("Vesp", "...is that what we are? little lights, sent to mind the lights?"));
+            lines.Add(new DialogueLine("", "The shape answers your touch. A name surfaces, then a face you never met.",
+                "The Ferryman's Lantern - one who lit the way for others across the dark, and was forgotten the moment they were no longer needed."));
+            lines.Add(new DialogueLine("the Weave", "The ember waits in your hands. What you give it now, it becomes."));
+
+            return lines;
         }
 
         public static List<DialogueLine> Ending(int choice)

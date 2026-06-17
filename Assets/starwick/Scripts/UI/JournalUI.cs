@@ -15,6 +15,7 @@ namespace Starwick
         Image panel;
         bool wasDown;
         int shownCount = -1;
+        float indPop = 1f;
 
         void Start()
         {
@@ -55,8 +56,12 @@ namespace Starwick
             {
                 shownCount = n;
                 if (indicator != null) indicator.text = n == 1 ? "1 memory" : n + " memories";
+                indPop = 1.3f;
                 if (IsOpen) Refresh();
             }
+
+            indPop = Mathf.MoveTowards(indPop, 1f, Time.deltaTime * 1.6f);
+            if (indicator != null) indicator.rectTransform.localScale = Vector3.one * indPop;
 
             bool down = InputService.PointerDown;
             if (down && !wasDown)

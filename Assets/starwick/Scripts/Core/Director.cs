@@ -30,6 +30,7 @@ namespace Starwick
                 while (Chosen == 0) yield return null;
                 if (Sw.Narration != null) Sw.Narration.HideChoices();
                 GameState.Choice = Chosen;
+                SaveData.RecordRun();
 
                 if (Sw.PostFx != null) Sw.PostFx.SetMoodWarm(Chosen == 2 ? 1f : 0.12f);
                 if (Sw.Dialogue != null) Sw.Dialogue.Play(StoryData.Ending(Chosen));
@@ -45,7 +46,7 @@ namespace Starwick
 
                 GameState.Reset();
                 if (Sw.PostFx != null) Sw.PostFx.SetMoodWarm(0.45f);
-                if (Sw.Decor != null) Sw.Decor.ResetSites();
+                if (Sw.Decor != null) Sw.Decor.Reseed((GameState.CompanionIndex + 1) % Roster.UnlockedCount(SaveData.RunsCompleted));
                 Chosen = 0;
             }
         }

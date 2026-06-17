@@ -16,6 +16,13 @@ namespace Starwick
             if (Sw.Realm == null) return;
             Sw.Decor = this;
 
+            BuildSites();
+            ResetSites();
+            if (Sw.Constellation != null) Sw.Constellation.OnRelight += OnRelight;
+        }
+
+        void BuildSites()
+        {
             var pts = Sw.Realm.Sites;
             Sites = new RealmSite[pts.Length];
             for (int i = 0; i < pts.Length; i++)
@@ -27,9 +34,34 @@ namespace Starwick
                 Sites[i] = site;
                 site.MarkDormant();
             }
+        }
+
+        public void Reseed(int index)
+        {
+            StopAllCoroutines();
+            GameState.CompanionIndex = index;
+            SaveData.MarkCompanionSeen(index);
+            if (index >= 0 && index < Roster.All.Length && Roster.All[index].UnlockRuns > 0)
+            {
+                SaveData.SecretsFound = 1;
+                SaveData.Save();
+            }
+            if (Sw.Realm != null) Sw.Realm.RebuildFor(Roster.Current.Seed);
+
+            if (Sites != null)
+                for (int i = 0; i < Sites.Length; i++)
+                    if (Sites[i] != null) Destroy(Sites[i].gameObject);
+
+            BuildSites();
+
+            if (Sw.Companion != null) Sw.Companion.Retint();
+            if (Sw.Motif != null)
+            {
+                Sw.Motif.clip = ProcAudio.Motif(Roster.Current.Pitch);
+                Sw.Motif.Play();
+            }
 
             ResetSites();
-            if (Sw.Constellation != null) Sw.Constellation.OnRelight += OnRelight;
         }
 
         void OnRelight()

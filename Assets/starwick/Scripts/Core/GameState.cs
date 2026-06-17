@@ -7,6 +7,7 @@ namespace Starwick
         public static int StarsRelit;
         public static int ConstellationsComplete;
         public static int Choice;
+        public static int CompanionIndex;
         public static readonly List<string> Fragments = new List<string>();
 
         public static void AddFragment(string fragment)

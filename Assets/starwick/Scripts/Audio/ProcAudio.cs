@@ -24,7 +24,7 @@ namespace Starwick
             return clip;
         }
 
-        public static AudioClip Motif(int seconds = 8, int sampleRate = 44100)
+        public static AudioClip Motif(float pitch = 1f, int seconds = 8, int sampleRate = 44100)
         {
             int n = seconds * sampleRate;
             var data = new float[n];
@@ -36,7 +36,7 @@ namespace Starwick
                 int idx = Mathf.Clamp((int)(t / noteLen), 0, notes.Length - 1);
                 float local = t - idx * noteLen;
                 float env = Mathf.Exp(-local * 2.2f) * Mathf.Clamp01(local * 30f);
-                float f = notes[idx];
+                float f = notes[idx] * pitch;
                 float s = Mathf.Sin(2f * Mathf.PI * f * t) * 0.6f + Mathf.Sin(2f * Mathf.PI * f * 2f * t) * 0.2f;
                 data[i] = s * env * 0.2f;
             }

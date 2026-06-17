@@ -58,6 +58,7 @@ namespace Starwick
         public static bool UiBlocking =>
             (Sw.Dialogue != null && Sw.Dialogue.Active) ||
             (Sw.Journal != null && Sw.Journal.IsOpen) ||
+            (Sw.Constellarium != null && Sw.Constellarium.IsOpen) ||
             (Sw.Narration != null && Sw.Narration.ChoiceActive);
     }
 }

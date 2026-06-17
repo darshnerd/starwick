@@ -19,6 +19,9 @@ namespace Starwick.Tests
             Assert.GreaterOrEqual(sites.Length, 3, "expected at least 3 star-sites");
             Assert.Greater(Vector3.Distance(sites[0], sites[1]), 8f, "sites overlap");
 
+            if (Sw.Decor != null) Sw.Decor.ResetSites();
+            yield return null;
+
             Assert.IsFalse(Sw.Constellation.transform.IsChildOf(Sw.Cam.transform),
                 "constellation still parented to the camera");
             var cp = Sw.Constellation.transform.position;

@@ -10,7 +10,10 @@ namespace Starwick
 
         float yaw;
         float pitch;
+        float shake;
         Spring groundY;
+
+        public float Shake => shake;
 
         void Start()
         {
@@ -22,6 +25,13 @@ namespace Starwick
             groundY.velocity = 0f;
             transform.position = new Vector3(transform.position.x, gy, transform.position.z);
             transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
+
+            if (Sw.Constellation != null) Sw.Constellation.OnRelight += Punch;
+        }
+
+        public void Punch()
+        {
+            shake = 1f;
         }
 
         void Update()
@@ -50,7 +60,13 @@ namespace Starwick
 
             groundY.Step(GroundY(transform.position), 120f, 18f, dt);
             transform.position = new Vector3(transform.position.x, groundY.value, transform.position.z);
-            transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
+
+            float k = shake * shake * 2.6f;
+            float ox = Mathf.Sin(Time.time * 41f) * k;
+            float oy = Mathf.Cos(Time.time * 37f) * k;
+            float oz = Mathf.Sin(Time.time * 47f) * k * 0.6f;
+            transform.rotation = Quaternion.Euler(pitch + ox, yaw + oy, oz);
+            shake = Mathf.MoveTowards(shake, 0f, dt * 2.2f);
         }
 
         float GroundY(Vector3 p)

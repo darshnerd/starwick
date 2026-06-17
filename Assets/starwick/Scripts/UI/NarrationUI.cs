@@ -21,9 +21,11 @@ namespace Starwick
         TMP_Text choiceB;
         bool choiceActive;
         bool singleButton;
+        float choiceReveal;
         System.Action<int> onChoice;
 
         public bool ChoiceActive => choiceActive;
+        public float ChoiceReveal => choiceReveal;
 
         void Start()
         {
@@ -46,7 +48,7 @@ namespace Starwick
                 new Vector2(0.5f, 0.27f), new Vector2(1400f, 50f));
 
             body = MakeText("Body", Typeface.Body, 38f, FontStyles.Normal,
-                Color.white, TextAlignmentOptions.Center,
+                new Color(1.35f, 1.35f, 1.45f, 1f), TextAlignmentOptions.Center,
                 new Vector2(0.5f, 0.155f), new Vector2(1400f, 190f));
 
             choiceBackdrop = MakeImage("ChoiceBackdrop", new Color(0f, 0f, 0.02f, 0.92f),
@@ -101,7 +103,9 @@ namespace Starwick
             choiceB.text = b;
             onChoice = cb;
             choiceActive = true;
+            choiceReveal = 0f;
             SetChoiceVisible(true);
+            ApplyChoiceScale();
         }
 
         public void ShowPrompt(string prompt, string label, System.Action cb)
@@ -111,7 +115,9 @@ namespace Starwick
             choiceA.text = label;
             onChoice = i => { if (i == 1) cb?.Invoke(); };
             choiceActive = true;
+            choiceReveal = 0f;
             SetChoiceVisible(true);
+            ApplyChoiceScale();
         }
 
         public void HideChoices()
@@ -127,6 +133,12 @@ namespace Starwick
             {
                 revealChars += Time.deltaTime * 45f;
                 body.maxVisibleCharacters = Mathf.Clamp((int)revealChars, 0, full.Length);
+            }
+
+            if (choiceActive)
+            {
+                choiceReveal = Mathf.MoveTowards(choiceReveal, 1f, Time.deltaTime * 4f);
+                ApplyChoiceScale();
             }
 
             bool down = InputService.PointerDown;
@@ -158,12 +170,24 @@ namespace Starwick
                     if (side != 0)
                     {
                         var cb = onChoice;
+                        if (Sw.Sfx != null) Sw.Sfx.Confirm();
                         HideChoices();
                         cb?.Invoke(side);
                     }
                 }
             }
             wasDown = down;
+        }
+
+        void ApplyChoiceScale()
+        {
+            float s = Mathf.Lerp(0.82f, 1f, Ease.OutBack(choiceReveal));
+            var sc = Vector3.one * s;
+            if (choicePrompt != null) choicePrompt.rectTransform.localScale = sc;
+            if (choiceBoxA != null) choiceBoxA.rectTransform.localScale = sc;
+            if (choiceA != null) choiceA.rectTransform.localScale = sc;
+            if (choiceBoxB != null) choiceBoxB.rectTransform.localScale = sc;
+            if (choiceB != null) choiceB.rectTransform.localScale = sc;
         }
 
         void LayoutButtons(bool single)

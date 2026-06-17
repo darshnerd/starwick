@@ -16,9 +16,11 @@ namespace Starwick
         public static DialogueSystem Dialogue;
         public static NarrationUI Narration;
         public static JournalUI Journal;
+        public static ConstellariumUI Constellarium;
         public static PostFx PostFx;
         public static Director Director;
         public static AudioManager Audio;
+        public static SfxManager Sfx;
         public static bool Booted;
         public static bool AmbientStarted;
         public static bool MotifStarted;

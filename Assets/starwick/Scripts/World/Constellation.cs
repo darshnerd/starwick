@@ -82,6 +82,7 @@ namespace Starwick
         {
             if (Complete || i != TracedCount) return;
             TracedCount++;
+            if (Sw.Sfx != null) Sw.Sfx.Shimmer(TracedCount);
             if (TracedCount >= local.Count) Relight();
         }
 
@@ -104,7 +105,9 @@ namespace Starwick
             EmitNodes(lit);
             GameState.StarsRelit++;
             GameState.ConstellationsComplete++;
+            SaveData.RecordRelight();
             if (fx != null) fx.Play();
+            if (Sw.Sfx != null) Sw.Sfx.Chime();
             OnRelight?.Invoke();
         }
 
