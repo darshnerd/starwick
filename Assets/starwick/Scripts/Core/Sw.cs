@@ -11,6 +11,8 @@ namespace Starwick
         public static Companion Companion;
         public static AudioSource Motif;
         public static Constellation Constellation;
+        public static DialogueSystem Dialogue;
+        public static JournalUI Journal;
         public static bool Booted;
         public static bool AmbientStarted;
         public static bool MotifStarted;

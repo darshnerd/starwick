@@ -11,6 +11,8 @@ namespace Starwick
         public int NodeCount => local.Count;
         public int TracedCount { get; private set; }
 
+        public System.Action OnRelight;
+
         readonly List<Vector3> local = new List<Vector3>
         {
             new Vector3(-4f, -1.2f, 0f),
@@ -21,8 +23,8 @@ namespace Starwick
         };
 
         ParticleSystem nodes;
-        ParticleSystem burst;
         LineRenderer line;
+        StarRelightFx fx;
 
         readonly Color dim = new Color(0.55f, 0.7f, 1.3f, 1f);
         readonly Color lit = new Color(2.6f, 2.1f, 1.2f, 1f);
@@ -36,11 +38,6 @@ namespace Starwick
             ConfigPoints(nodes, tex, sprite, 1.1f);
             EmitNodes(dim);
 
-            var burstGo = new GameObject("Burst");
-            burstGo.transform.SetParent(transform, false);
-            burst = burstGo.AddComponent<ParticleSystem>();
-            ConfigBurst(burst, tex, sprite);
-
             line = gameObject.AddComponent<LineRenderer>();
             line.material = new Material(sprite);
             line.useWorldSpace = true;
@@ -49,6 +46,10 @@ namespace Starwick
             line.positionCount = 0;
             line.startColor = lit;
             line.endColor = lit;
+
+            var fxGo = new GameObject("RelightFx");
+            fxGo.transform.SetParent(transform, false);
+            fx = fxGo.AddComponent<StarRelightFx>();
         }
 
         void Update()
@@ -82,10 +83,10 @@ namespace Starwick
         {
             Complete = true;
             EmitNodes(lit);
-            burst.transform.position = transform.position;
-            burst.Emit(80);
             GameState.StarsRelit++;
             GameState.ConstellationsComplete++;
+            if (fx != null) fx.Play();
+            OnRelight?.Invoke();
         }
 
         void RefreshLine()
@@ -121,32 +122,6 @@ namespace Starwick
 
             var emission = ps.emission;
             emission.enabled = false;
-
-            var renderer = ps.GetComponent<ParticleSystemRenderer>();
-            renderer.material = new Material(shader) { mainTexture = tex };
-            renderer.renderMode = ParticleSystemRenderMode.Billboard;
-        }
-
-        void ConfigBurst(ParticleSystem ps, Texture2D tex, Shader shader)
-        {
-            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            var main = ps.main;
-            main.loop = false;
-            main.playOnAwake = false;
-            main.startLifetime = 1.4f;
-            main.startSpeed = 6f;
-            main.startSize = new ParticleSystem.MinMaxCurve(0.2f, 0.6f);
-            main.startColor = new Color(2.6f, 2.2f, 1.4f, 1f);
-            main.maxParticles = 200;
-            main.simulationSpace = ParticleSystemSimulationSpace.World;
-
-            var emission = ps.emission;
-            emission.enabled = false;
-
-            var shape = ps.shape;
-            shape.enabled = true;
-            shape.shapeType = ParticleSystemShapeType.Sphere;
-            shape.radius = 0.5f;
 
             var renderer = ps.GetComponent<ParticleSystemRenderer>();
             renderer.material = new Material(shader) { mainTexture = tex };

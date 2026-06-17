@@ -16,6 +16,9 @@ namespace Starwick
         public bool HasConstellation => Sw.Constellation != null;
         public bool ConstellationComplete => Sw.Constellation != null && Sw.Constellation.Complete;
         public int StarsRelit => GameState.StarsRelit;
+        public bool DialogueActive => Sw.Dialogue != null && Sw.Dialogue.Active;
+        public string DialogueLineText => Sw.Dialogue != null && Sw.Dialogue.Current != null ? Sw.Dialogue.Current.Text : "";
+        public int FragmentCount => GameState.Fragments.Count;
         public float FrameMs { get; private set; }
 
         void Update()

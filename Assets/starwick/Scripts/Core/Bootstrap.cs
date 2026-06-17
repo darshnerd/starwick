@@ -32,6 +32,11 @@ namespace Starwick
             camGo.AddComponent<CameraRig>();
             Sw.Cam = cam;
 
+            var wickGo = new GameObject("WickBody");
+            wickGo.transform.SetParent(camGo.transform, false);
+            wickGo.transform.localPosition = new Vector3(0f, -1.6f, 3.6f);
+            wickGo.AddComponent<WickBody>();
+
             var cosmosGo = new GameObject("Cosmos");
             cosmosGo.transform.SetParent(root.transform);
             Sw.Cosmos = cosmosGo.AddComponent<CosmosFx>();
@@ -64,11 +69,28 @@ namespace Starwick
             Sw.Motif = motifSrc;
             Sw.MotifStarted = true;
 
+            var dlgGo = new GameObject("Dialogue");
+            dlgGo.transform.SetParent(root.transform);
+            Sw.Dialogue = dlgGo.AddComponent<DialogueSystem>();
+
             var conGo = new GameObject("Constellation");
             conGo.transform.SetParent(camGo.transform, false);
             conGo.transform.localPosition = new Vector3(0f, 0f, 14f);
             conGo.transform.localRotation = Quaternion.identity;
             Sw.Constellation = conGo.AddComponent<Constellation>();
+            Sw.Constellation.OnRelight += () =>
+            {
+                if (Sw.Dialogue != null)
+                    Sw.Dialogue.Play(StoryData.FirstConstellation());
+            };
+
+            var uiGo = new GameObject("NarrationUI");
+            uiGo.transform.SetParent(root.transform);
+            uiGo.AddComponent<NarrationUI>();
+
+            var journalGo = new GameObject("JournalUI");
+            journalGo.transform.SetParent(root.transform);
+            Sw.Journal = journalGo.AddComponent<JournalUI>();
 
             root.AddComponent<SwTestHarness>();
             Sw.Booted = true;
