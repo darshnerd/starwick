@@ -103,7 +103,7 @@ namespace Starwick
                         Quaternion.LookRotation(toCam.normalized, Vector3.up), dt * 3f);
 
                 bool down = InputService.PointerDown;
-                if (down && !wasDown)
+                if (down && !wasDown && !InputService.UiBlocking)
                 {
                     var sp = Sw.Cam.WorldToScreenPoint(transform.position);
                     if (sp.z > 0f && Vector2.Distance(InputService.PointerPosition, sp) < TapRadiusPixels)

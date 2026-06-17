@@ -41,11 +41,12 @@ namespace Starwick
             line = gameObject.AddComponent<LineRenderer>();
             line.material = new Material(sprite);
             line.useWorldSpace = true;
-            line.widthMultiplier = 0.07f;
+            line.widthMultiplier = 0.05f;
             line.numCapVertices = 4;
             line.positionCount = 0;
-            line.startColor = lit;
-            line.endColor = lit;
+            var lineGlow = new Color(1.5f, 1.35f, 1.05f, 1f);
+            line.startColor = lineGlow;
+            line.endColor = lineGlow;
 
             var fxGo = new GameObject("RelightFx");
             fxGo.transform.SetParent(transform, false);
@@ -54,7 +55,7 @@ namespace Starwick
 
         void Update()
         {
-            if (!Complete && Sw.Cam != null && InputService.PointerDown)
+            if (!Complete && !InputService.UiBlocking && Sw.Cam != null && InputService.PointerDown)
             {
                 int next = TracedCount;
                 if (next < local.Count)
@@ -77,6 +78,14 @@ namespace Starwick
         public void TraceAll()
         {
             while (!Complete && TracedCount < local.Count) TraceNode(TracedCount);
+        }
+
+        public void ResetForReplay()
+        {
+            Complete = false;
+            TracedCount = 0;
+            EmitNodes(dim);
+            if (line != null) line.positionCount = 0;
         }
 
         void Relight()

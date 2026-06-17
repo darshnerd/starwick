@@ -1,11 +1,18 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Starwick
 {
     public static class ProcTex
     {
+        static readonly Dictionary<int, Texture2D> dotCache = new Dictionary<int, Texture2D>();
+        static readonly Dictionary<long, Texture2D> nebulaCache = new Dictionary<long, Texture2D>();
+
         public static Texture2D SoftDot(int size = 64)
         {
+            if (dotCache.TryGetValue(size, out var cached) && cached != null)
+                return cached;
+
             var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
             tex.wrapMode = TextureWrapMode.Clamp;
             float r = size * 0.5f;
@@ -24,11 +31,16 @@ namespace Starwick
             }
             tex.SetPixels(px);
             tex.Apply();
+            dotCache[size] = tex;
             return tex;
         }
 
         public static Texture2D Nebula(int size = 128, int seed = 4242)
         {
+            long key = ((long)size << 32) ^ (uint)seed;
+            if (nebulaCache.TryGetValue(key, out var cached) && cached != null)
+                return cached;
+
             var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
             tex.wrapMode = TextureWrapMode.Clamp;
             float r = size * 0.5f;
@@ -57,6 +69,7 @@ namespace Starwick
             }
             tex.SetPixels(px);
             tex.Apply();
+            nebulaCache[key] = tex;
             return tex;
         }
     }

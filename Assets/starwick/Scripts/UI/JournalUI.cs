@@ -56,7 +56,7 @@ namespace Starwick
             if (n != shownCount)
             {
                 shownCount = n;
-                if (indicator != null) indicator.text = "✦ " + n;
+                if (indicator != null) indicator.text = n + " memories";
                 if (IsOpen) Refresh();
             }
 
@@ -86,7 +86,7 @@ namespace Starwick
                 sb.Append("<i>No memories recovered yet.</i>");
             else
                 for (int i = 0; i < GameState.Fragments.Count; i++)
-                    sb.Append("✦  ").Append(GameState.Fragments[i]).Append("\n\n");
+                    sb.Append("-  ").Append(GameState.Fragments[i]).Append("\n\n");
             if (list != null) list.text = sb.ToString();
         }
 

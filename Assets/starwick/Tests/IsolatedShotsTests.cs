@@ -8,6 +8,9 @@ namespace Starwick.Tests
 {
     public class IsolatedShotsTests
     {
+        const int CullLayer = 30;
+        float lastBrightest;
+
         [UnityTest]
         public IEnumerator Isolated_element_shots()
         {
@@ -16,25 +19,44 @@ namespace Starwick.Tests
             var dir = Path.Combine(Directory.GetCurrentDirectory(), "CaptureOutput");
             Directory.CreateDirectory(dir);
 
+            if (Sw.Cosmos != null) SetLayer(Sw.Cosmos.transform, CullLayer);
+
             var camGo = new GameObject("IsoCam");
             var cam = camGo.AddComponent<Camera>();
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = new Color(0.01f, 0.01f, 0.03f);
+            cam.backgroundColor = new Color(0.005f, 0.005f, 0.02f);
             cam.fieldOfView = 35f;
+            cam.cullingMask = ~(1 << CullLayer);
 
-            yield return Shot(cam, Sw.Companion.transform, 3.2f, Path.Combine(dir, "iso_vesp.png"));
+            yield return Shot(cam, Sw.Companion.transform, 3.0f, Path.Combine(dir, "iso_vesp.png"));
+            float vespBright = lastBrightest;
 
+            float wickBright = 0f;
             var wick = GameObject.Find("WickBody");
             if (wick != null)
+            {
                 yield return Shot(cam, wick.transform, 4.0f, Path.Combine(dir, "iso_wick.png"));
+                wickBright = lastBrightest;
+            }
 
             Object.Destroy(camGo);
-            Debug.Log("[swloop] isolated shots: vesp + wick captured");
+            if (Sw.Cosmos != null) SetLayer(Sw.Cosmos.transform, 0);
+
+            Debug.Log($"[swloop] iso vespBright={vespBright:F2} wickBright={wickBright:F2}");
+            Assert.Greater(vespBright, 0.4f, "Vesp not visible in its isolated shot");
+            if (wick != null) Assert.Greater(wickBright, 0.4f, "Wick not visible in its isolated shot");
+        }
+
+        static void SetLayer(Transform t, int layer)
+        {
+            t.gameObject.layer = layer;
+            for (int i = 0; i < t.childCount; i++)
+                SetLayer(t.GetChild(i), layer);
         }
 
         IEnumerator Shot(Camera cam, Transform target, float dist, string path)
         {
-            cam.transform.position = target.position + new Vector3(0.5f, 0.35f, -1f).normalized * dist;
+            cam.transform.position = target.position + new Vector3(0.4f, 0.3f, -1f).normalized * dist;
             cam.transform.LookAt(target.position);
 
             var rt = new RenderTexture(480, 480, 24);
@@ -47,6 +69,13 @@ namespace Starwick.Tests
             tex.Apply();
             cam.targetTexture = null;
             RenderTexture.active = null;
+
+            var px = tex.GetPixels();
+            float b = 0f;
+            for (int i = 0; i < px.Length; i++)
+                b = Mathf.Max(b, Mathf.Max(px[i].r, Mathf.Max(px[i].g, px[i].b)));
+            lastBrightest = b;
+
             File.WriteAllBytes(path, tex.EncodeToPNG());
             Object.Destroy(tex);
             rt.Release();

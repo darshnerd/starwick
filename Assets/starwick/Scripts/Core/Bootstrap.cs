@@ -43,7 +43,7 @@ namespace Starwick
 
             var postGo = new GameObject("PostFx");
             postGo.transform.SetParent(root.transform);
-            postGo.AddComponent<PostFx>();
+            Sw.PostFx = postGo.AddComponent<PostFx>();
 
             var audioGo = new GameObject("Ambient");
             audioGo.transform.SetParent(root.transform);
@@ -78,19 +78,18 @@ namespace Starwick
             conGo.transform.localPosition = new Vector3(0f, 0f, 14f);
             conGo.transform.localRotation = Quaternion.identity;
             Sw.Constellation = conGo.AddComponent<Constellation>();
-            Sw.Constellation.OnRelight += () =>
-            {
-                if (Sw.Dialogue != null)
-                    Sw.Dialogue.Play(StoryData.FirstConstellation());
-            };
 
             var uiGo = new GameObject("NarrationUI");
             uiGo.transform.SetParent(root.transform);
-            uiGo.AddComponent<NarrationUI>();
+            Sw.Narration = uiGo.AddComponent<NarrationUI>();
 
             var journalGo = new GameObject("JournalUI");
             journalGo.transform.SetParent(root.transform);
             Sw.Journal = journalGo.AddComponent<JournalUI>();
+
+            var dirGo = new GameObject("Director");
+            dirGo.transform.SetParent(root.transform);
+            Sw.Director = dirGo.AddComponent<Director>();
 
             root.AddComponent<SwTestHarness>();
             Sw.Booted = true;

@@ -37,7 +37,8 @@ namespace Starwick.Tests
                 for (int x = 0; x < w; x++)
                 {
                     var c = px[y * w + x];
-                    if (c.r > 0.7f && c.g > 0.7f && c.b > 0.7f) whiteLower++;
+                    float lum = 0.299f * c.r + 0.587f * c.g + 0.114f * c.b;
+                    if (lum > 0.6f) whiteLower++;
                 }
 
             var dir = Path.Combine(Directory.GetCurrentDirectory(), "CaptureOutput");

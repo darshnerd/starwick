@@ -54,5 +54,10 @@ namespace Starwick
                 return Vector2.zero;
             }
         }
+
+        public static bool UiBlocking =>
+            (Sw.Dialogue != null && Sw.Dialogue.Active) ||
+            (Sw.Journal != null && Sw.Journal.IsOpen) ||
+            (Sw.Narration != null && Sw.Narration.ChoiceActive);
     }
 }
