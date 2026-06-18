@@ -14,9 +14,13 @@ namespace Starwick.Tests
             Assert.IsTrue(Sw.Booted, "not booted");
             Assert.IsNotNull(Sw.Cosmos, "no cosmos");
 
-            Assert.AreEqual(Mathf.Min(150, SaveData.TotalStarsRelit), Sw.Cosmos.BonusStars,
-                "restored-star count does not track all-time total");
-            Assert.Greater(Sw.Cosmos.BonusStars, 0, "no restored stars in a veteran sky");
+            SaveData.TotalStarsRelit = 80;
+            Sw.Cosmos.RefreshBonus();
+            Assert.AreEqual(80, Sw.Cosmos.BonusStars, "restored-star count does not track all-time total");
+
+            SaveData.TotalStarsRelit = 999;
+            Sw.Cosmos.RefreshBonus();
+            Assert.AreEqual(150, Sw.Cosmos.BonusStars, "restored stars not capped");
 
             int runs = SaveData.RunsCompleted;
             SaveData.RunsCompleted = 0;
@@ -28,7 +32,7 @@ namespace Starwick.Tests
             Assert.Greater(returning.Count, firstTime.Count, "returning run has no extra greeting line");
             Assert.AreEqual("Vesp", returning[0].Speaker, "greeting is not from the companion");
 
-            Debug.Log($"[swloop] m9c bonus={Sw.Cosmos.BonusStars} first={firstTime.Count} returning={returning.Count}");
+            Debug.Log($"[swloop] m9c first={firstTime.Count} returning={returning.Count}");
         }
     }
 }

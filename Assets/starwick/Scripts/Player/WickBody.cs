@@ -102,6 +102,14 @@ namespace Starwick
             body.localRotation = Quaternion.Euler(lean.value.z * 40f, 0f, -lean.value.x * 40f);
             body.localScale = Vector3.one * vis;
 
+            Vector3 wp = body.position;
+            float minY = (Sw.Realm != null ? Sw.Realm.Height(wp.x, wp.z) : wp.y) + 0.5f;
+            if (wp.y < minY)
+            {
+                wp.y = minY;
+                body.position = wp;
+            }
+
             float flare = 0f;
             if (relightT > -1f)
             {

@@ -59,6 +59,7 @@ namespace Starwick
             (Sw.Dialogue != null && Sw.Dialogue.Active) ||
             (Sw.Journal != null && Sw.Journal.IsOpen) ||
             (Sw.Constellarium != null && Sw.Constellarium.IsOpen) ||
+            (Sw.Title != null && Sw.Title.Visible) ||
             (Sw.Narration != null && Sw.Narration.ChoiceActive);
     }
 }

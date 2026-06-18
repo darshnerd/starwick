@@ -19,6 +19,7 @@ namespace Starwick.Tests
             Assert.IsTrue(Typeface.UsingCustomFonts, "fell back to default TMP font");
             StringAssert.Contains("Grotesk", heading);
             StringAssert.Contains("Sora", body);
+            StringAssert.Contains("SemiBold", Typeface.HeadingAssetName);
         }
     }
 }

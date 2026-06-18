@@ -21,6 +21,7 @@ namespace Starwick
         public static bool UsingCustomFonts => Ensure() && heading != null && heading != TMP_Settings.defaultFontAsset;
         public static string HeadingFamily => Ensure() && heading != null ? heading.faceInfo.familyName : "";
         public static string BodyFamily => Ensure() && body != null ? body.faceInfo.familyName : "";
+        public static string HeadingAssetName => Ensure() && heading != null ? heading.name : "";
 
         static bool Ensure()
         {

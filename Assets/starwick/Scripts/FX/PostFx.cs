@@ -79,8 +79,11 @@ namespace Starwick
             warm = Mathf.MoveTowards(warm, warmTarget, dt * 0.5f);
             ApplyMood();
 
-            bool focusOn = (Sw.Dialogue != null && Sw.Dialogue.Active) ||
-                           (Sw.Narration != null && Sw.Narration.ChoiceActive);
+            bool menuOpen = (Sw.Journal != null && Sw.Journal.IsOpen) ||
+                            (Sw.Constellarium != null && Sw.Constellarium.IsOpen);
+            bool focusOn = !menuOpen &&
+                           ((Sw.Dialogue != null && Sw.Dialogue.Active) ||
+                            (Sw.Narration != null && Sw.Narration.ChoiceActive));
             float focusTarget = focusOn ? 1f : 0f;
             focus = Mathf.MoveTowards(focus, focusTarget, dt * 2.5f);
             if (dof != null)

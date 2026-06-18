@@ -40,7 +40,7 @@ namespace Starwick
 
             var wickGo = new GameObject("WickBody");
             wickGo.transform.SetParent(camGo.transform, false);
-            wickGo.transform.localPosition = new Vector3(0f, -1.6f, 3.6f);
+            wickGo.transform.localPosition = new Vector3(0.35f, -1.15f, 2.5f);
             wickGo.AddComponent<WickBody>();
 
             var cosmosGo = new GameObject("Cosmos");
@@ -103,6 +103,10 @@ namespace Starwick
             var skyGo = new GameObject("ConstellariumUI");
             skyGo.transform.SetParent(root.transform);
             Sw.Constellarium = skyGo.AddComponent<ConstellariumUI>();
+
+            var titleGo = new GameObject("TitleUI");
+            titleGo.transform.SetParent(root.transform);
+            Sw.Title = titleGo.AddComponent<TitleUI>();
 
             var dirGo = new GameObject("Director");
             dirGo.transform.SetParent(root.transform);

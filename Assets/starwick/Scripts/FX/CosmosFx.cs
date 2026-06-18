@@ -15,6 +15,7 @@ namespace Starwick
         ParticleSystem stars;
         ParticleSystem twinkle;
         ParticleSystem nebula;
+        ParticleSystem restored;
         Material starMat;
         Material twinkleMat;
 
@@ -41,13 +42,17 @@ namespace Starwick
                 new Color(0.9f, 0.45f, 1.25f, 0.45f), new Color(0.3f, 0.6f, 1.15f, 0.46f), cloud, shader, true);
             nebula.Emit(NebulaCount);
 
+            restored = NewLayer("Restored", 160, Radius * 0.96f, 0.45f, 1.15f,
+                new Color(2.8f, 2.2f, 1.3f, 1f), new Color(2.4f, 1.8f, 1.0f, 1f), dot, shader, false);
+            RefreshBonus();
+        }
+
+        public void RefreshBonus()
+        {
+            if (restored == null) return;
             BonusStars = Mathf.Min(150, SaveData.TotalStarsRelit);
-            if (BonusStars > 0)
-            {
-                var restored = NewLayer("Restored", BonusStars, Radius * 0.96f, 0.45f, 1.15f,
-                    new Color(2.8f, 2.2f, 1.3f, 1f), new Color(2.4f, 1.8f, 1.0f, 1f), dot, shader, false);
-                restored.Emit(BonusStars);
-            }
+            restored.Clear();
+            if (BonusStars > 0) restored.Emit(BonusStars);
         }
 
         void Update()

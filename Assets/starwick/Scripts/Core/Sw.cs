@@ -17,6 +17,7 @@ namespace Starwick
         public static NarrationUI Narration;
         public static JournalUI Journal;
         public static ConstellariumUI Constellarium;
+        public static TitleUI Title;
         public static PostFx PostFx;
         public static Director Director;
         public static AudioManager Audio;

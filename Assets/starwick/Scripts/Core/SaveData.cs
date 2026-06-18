@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Starwick
@@ -14,21 +15,27 @@ namespace Starwick
         const string KComp = "sw_comp";
         const string KSecrets = "sw_secrets";
 
+        static readonly Dictionary<string, int> mem = new Dictionary<string, int>();
+        static bool InMemory => Application.isBatchMode;
+
+        static int Get(string k) => InMemory ? (mem.TryGetValue(k, out var v) ? v : 0) : PlayerPrefs.GetInt(k, 0);
+        static void Set(string k, int v) { if (InMemory) mem[k] = v; else PlayerPrefs.SetInt(k, v); }
+
         public static void Load()
         {
-            TotalStarsRelit = PlayerPrefs.GetInt(KStars, 0);
-            RunsCompleted = PlayerPrefs.GetInt(KRuns, 0);
-            CompanionsSeen = PlayerPrefs.GetInt(KComp, 0);
-            SecretsFound = PlayerPrefs.GetInt(KSecrets, 0);
+            TotalStarsRelit = Get(KStars);
+            RunsCompleted = Get(KRuns);
+            CompanionsSeen = Get(KComp);
+            SecretsFound = Get(KSecrets);
         }
 
         public static void Save()
         {
-            PlayerPrefs.SetInt(KStars, TotalStarsRelit);
-            PlayerPrefs.SetInt(KRuns, RunsCompleted);
-            PlayerPrefs.SetInt(KComp, CompanionsSeen);
-            PlayerPrefs.SetInt(KSecrets, SecretsFound);
-            PlayerPrefs.Save();
+            Set(KStars, TotalStarsRelit);
+            Set(KRuns, RunsCompleted);
+            Set(KComp, CompanionsSeen);
+            Set(KSecrets, SecretsFound);
+            if (!InMemory) PlayerPrefs.Save();
         }
 
         public static void RecordRelight()
