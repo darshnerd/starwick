@@ -6,5 +6,6 @@ namespace Starwick
         public int GatesRelit;
         public int BestChain;
         public int Starlight;
+        public bool Fragment;
     }
 }

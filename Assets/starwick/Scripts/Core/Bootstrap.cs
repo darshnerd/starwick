@@ -122,9 +122,9 @@ namespace Starwick
 
             if (!Application.isBatchMode)
             {
-                var modeGo = new GameObject("ModeSelectUI");
-                modeGo.transform.SetParent(root.transform);
-                modeGo.AddComponent<ModeSelectUI>();
+                var coldGo = new GameObject("ColdOpen");
+                coldGo.transform.SetParent(root.transform);
+                coldGo.AddComponent<ColdOpen>();
             }
 
             root.AddComponent<SwTestHarness>();

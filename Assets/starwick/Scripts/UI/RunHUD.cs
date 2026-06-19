@@ -15,11 +15,8 @@ namespace Starwick
         public float LastPressure;
         public bool ResultsShown;
 
-        TMP_Text comboText;
-        TMP_Text styleText;
         TMP_Text distText;
         TMP_Text resultText;
-        Image flowFill;
         Image pressTint;
 
         void Awake()
@@ -33,27 +30,11 @@ namespace Starwick
             pressTint = MakeImage("Pressure", new Color(0.01f, 0.0f, 0.03f, 0f),
                 new Vector2(0.5f, 0.5f), new Vector2(1920f, 1080f));
 
-            distText = MakeText("Distance", Typeface.HeadingMedium, 34f,
-                new Color(0.76f, 0.71f, 1f, 1f), TextAlignmentOptions.TopLeft,
-                new Vector2(0.5f, 0.95f), new Vector2(1700f, 60f));
+            distText = MakeText("Distance", Typeface.HeadingMedium, 26f,
+                new Color(0.62f, 0.6f, 0.82f, 0.7f), TextAlignmentOptions.Top,
+                new Vector2(0.5f, 0.96f), new Vector2(900f, 44f));
 
-            MakeImage("FlowBg", new Color(0.1f, 0.12f, 0.2f, 0.7f),
-                new Vector2(0.5f, 0.07f), new Vector2(620f, 26f));
-            flowFill = MakeImage("FlowFill", new Color(0.7f, 0.55f, 1f, 1f),
-                new Vector2(0.5f, 0.07f), new Vector2(620f, 26f));
-            flowFill.type = Image.Type.Filled;
-            flowFill.fillMethod = Image.FillMethod.Horizontal;
-            flowFill.fillAmount = 0f;
-
-            comboText = MakeText("Combo", Typeface.Heading, 64f,
-                new Color(1f, 0.86f, 0.55f, 1f), TextAlignmentOptions.Center,
-                new Vector2(0.5f, 0.14f), new Vector2(800f, 80f));
-
-            styleText = MakeText("Style", Typeface.BodyMedium, 36f,
-                new Color(0.82f, 0.73f, 1f, 1f), TextAlignmentOptions.Center,
-                new Vector2(0.5f, 0.1f), new Vector2(800f, 50f));
-
-            resultText = MakeText("Result", Typeface.Heading, 52f,
+            resultText = MakeText("Result", Typeface.Heading, 50f,
                 new Color(0.91f, 0.86f, 1f, 1f), TextAlignmentOptions.Center,
                 new Vector2(0.5f, 0.5f), new Vector2(1400f, 400f));
             resultText.gameObject.SetActive(false);
@@ -69,10 +50,7 @@ namespace Starwick
             LastRelit = relit;
             LastPressure = pressure;
 
-            if (flowFill != null) flowFill.fillAmount = Mathf.Clamp01(flow);
-            if (comboText != null) comboText.text = chain > 1 ? $"x{chain}" : "";
-            if (styleText != null) styleText.text = style;
-            if (distText != null) distText.text = $"{Mathf.RoundToInt(distance)} m   ·   {relit} relit";
+            if (distText != null) distText.text = $"{Mathf.RoundToInt(distance)}";
             if (pressTint != null)
             {
                 var c = pressTint.color;
@@ -86,7 +64,10 @@ namespace Starwick
             ResultsShown = true;
             if (resultText == null) return;
             resultText.gameObject.SetActive(true);
-            resultText.text = $"the weave holds\n\n{r.GatesRelit} stars relit\nbest weave  x{r.BestChain}\n+{r.Starlight} starlight";
+            if (r.Fragment)
+                resultText.text = $"the dark drew close\n\nthe Hollow caught you\na memory remains\n+{r.Starlight} starlight";
+            else
+                resultText.text = $"the weave holds\n\n{r.GatesRelit} stars relit\n+{r.Starlight} starlight";
         }
 
         Image MakeImage(string n, Color c, Vector2 anchor, Vector2 size)

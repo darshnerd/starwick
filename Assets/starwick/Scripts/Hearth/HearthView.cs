@@ -7,9 +7,12 @@ namespace Starwick
         public Transform[] Nodes { get; private set; }
         public bool Reacted { get; private set; }
         public int PulseNode => pulseIndex;
+        public int StructureCount => structures;
 
         Material[] mats;
         Vector3[] baseScale;
+        bool[] hasStructure;
+        int structures;
         int pulseIndex = -1;
         float reactClock;
         ParticleSystem motes;
@@ -32,6 +35,7 @@ namespace Starwick
         static readonly Color Restored = new Color(2.6f, 2.0f, 1.1f, 1f);
         static readonly Color Dormant = new Color(0.18f, 0.22f, 0.4f, 1f);
         static readonly Color Affordable = new Color(0.6f, 0.7f, 1.4f, 1f);
+        static readonly Color Spire = new Color(2.2f, 1.7f, 0.9f, 1f);
 
         public void Build()
         {
@@ -39,6 +43,8 @@ namespace Starwick
             Nodes = new Transform[Order.Length];
             mats = new Material[Order.Length];
             baseScale = new Vector3[Order.Length];
+            hasStructure = new bool[Order.Length];
+            structures = 0;
 
             for (int i = 0; i < Order.Length; i++)
             {
@@ -78,10 +84,30 @@ namespace Starwick
                 Nodes[i] = go.transform;
                 mats[i] = m;
                 baseScale[i] = go.transform.localScale;
+
+                if (restored) GrowStructure(i);
             }
 
             motes = BuildMotes();
             pulseIndex = NextAffordable();
+        }
+
+        void GrowStructure(int i)
+        {
+            if (hasStructure[i] || Nodes[i] == null) return;
+            var unlit = Shader.Find("Universal Render Pipeline/Unlit");
+            var go = new GameObject("Spire");
+            go.transform.SetParent(Nodes[i], false);
+            go.transform.localPosition = new Vector3(0f, 1.6f, 0f);
+            go.transform.localScale = new Vector3(0.7f, 2.4f, 0.7f);
+            go.AddComponent<MeshFilter>().sharedMesh = ProcMesh.Octahedron(0.6f);
+            var mr = go.AddComponent<MeshRenderer>();
+            var m = new Material(unlit);
+            m.color = Spire;
+            m.SetColor("_BaseColor", Spire);
+            mr.material = m;
+            hasStructure[i] = true;
+            structures++;
         }
 
         ParticleSystem BuildMotes()
@@ -131,6 +157,7 @@ namespace Starwick
                 bool core = Order[i] == HearthState.Node.RainikyoCore;
                 var c = restored ? (core ? Restored * 1.4f : Restored) : Dormant;
                 if (mats[i] != null) { mats[i].color = c; mats[i].SetColor("_BaseColor", c); }
+                if (restored) GrowStructure(i);
             }
 
             pulseIndex = NextAffordable();

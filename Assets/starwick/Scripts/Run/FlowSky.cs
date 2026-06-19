@@ -6,9 +6,11 @@ namespace Starwick
     {
         public int StarCount = 520;
         public float Radius = 150f;
+        public float Brightness { get; private set; } = 1f;
 
         ParticleSystem stars;
         ParticleSystem nebula;
+        Material starMat;
 
         bool fogWas;
         FogMode fogModeWas;
@@ -25,6 +27,7 @@ namespace Starwick
             nebula = BuildLayer("FlowNebula", ProcTex.Nebula(128, 1337), Radius * 0.82f,
                 new Color(0.55f, 0.4f, 1.1f, 0.4f), new Color(0.3f, 0.55f, 1.1f, 0.42f),
                 26f, 52f, 28);
+            starMat = stars.GetComponent<ParticleSystemRenderer>().material;
         }
 
         ParticleSystem BuildLayer(string n, Texture2D tex, float radius, Color a, Color b,
@@ -60,6 +63,13 @@ namespace Starwick
 
             ps.Emit(count);
             return ps;
+        }
+
+        public void SetBrightness(float progress)
+        {
+            float level = Mathf.Lerp(0.7f, 1.5f, Mathf.Clamp01(progress));
+            Brightness = level;
+            if (starMat != null) starMat.color = new Color(level, level, level, 1f);
         }
 
         void OnEnable()

@@ -11,15 +11,20 @@ namespace Starwick
         public RunTrackGenerator Track { get; private set; }
         public FlowCameraRig Camera { get; private set; }
         public ComboSystem Combo { get; private set; }
+        public RunHollow Hollow { get; private set; }
         public bool Running { get; private set; }
         public bool RelightFired { get; private set; }
+        public bool EndedAsFragment { get; private set; }
         public RunResults Results { get; private set; }
+        public Texture2D PostcardImage { get; private set; }
         public RunHUD Hud;
 
         public int GlyphLineCount => gateLines.Count;
         public float HarmonyLevel => harmonySrc != null ? harmonySrc.volume : 0f;
         public float WickLightIntensity => wickLight != null ? wickLight.intensity : 0f;
         public float WickDim { get; private set; }
+        public float TrailWidth => trail != null ? trail.startWidth : 0f;
+        public float SkyLevel => flowSky != null ? flowSky.Brightness : 0f;
 
         readonly List<ConstellationGate> gates = new List<ConstellationGate>();
         readonly List<Transform[]> gateNodes = new List<Transform[]>();
@@ -33,9 +38,11 @@ namespace Starwick
         Light wickLight;
         Material wickMat;
         AudioSource harmonySrc;
+        FlowSky flowSky;
         Vector3 prevPos;
         int relitCount;
         float runClock;
+        float fragTimer;
 
         static readonly Color WickWarm = new Color(2.9f, 2.1f, 1.2f, 1f);
         static readonly Color WickDark = new Color(0.7f, 0.6f, 0.95f, 1f);
@@ -71,7 +78,12 @@ namespace Starwick
 
             var skyGo = new GameObject("FlowSky");
             skyGo.transform.SetParent(Camera.VisualCam, false);
-            skyGo.AddComponent<FlowSky>();
+            flowSky = skyGo.AddComponent<FlowSky>();
+
+            var hGo = new GameObject("RunHollow");
+            hGo.transform.SetParent(transform);
+            Hollow = hGo.AddComponent<RunHollow>();
+            Hollow.Init(Roster.Current.Glow, Motor.Position + new Vector3(2f, 1.4f, 1f));
 
             harmonySrc = gameObject.AddComponent<AudioSource>();
             harmonySrc.clip = ProcAudio.Pad(8);
@@ -91,6 +103,7 @@ namespace Starwick
             gateResolved.Clear();
             relitCount = 0;
             runClock = 0f;
+            fragTimer = 0f;
             WickDim = 0f;
 
             BuildWickVisual();
@@ -100,6 +113,7 @@ namespace Starwick
             if (wickVisual != null) wickVisual.position = prevPos;
             Results = null;
             RelightFired = false;
+            EndedAsFragment = false;
             Running = true;
         }
 
@@ -266,9 +280,10 @@ namespace Starwick
             }
         }
 
-        void ApplyPressureDarkness()
+        void ApplyDiegeticFeedback()
         {
             float darkness = Mathf.Clamp01(Combo != null ? Combo.Pressure : 0f);
+            float flow = Combo != null ? Combo.FlowMeter : 0f;
             WickDim = darkness;
 
             if (wickLight != null)
@@ -278,7 +293,7 @@ namespace Starwick
             }
             if (trail != null)
             {
-                trail.startWidth = Mathf.Lerp(0.55f, 0.16f, darkness);
+                trail.startWidth = Mathf.Lerp(0.32f, 0.72f, flow) * Mathf.Lerp(1f, 0.3f, darkness);
                 trail.time = Mathf.Lerp(0.7f, 0.32f, darkness);
                 var sc = new Color(2.2f, 1.6f, 2.6f, Mathf.Lerp(0.9f, 0.28f, darkness));
                 trail.startColor = sc;
@@ -290,10 +305,9 @@ namespace Starwick
                 wickMat.SetColor("_BaseColor", wc);
             }
             if (harmonySrc != null)
-            {
-                float flow = Combo != null ? Combo.FlowMeter : 0f;
                 harmonySrc.volume = Mathf.Lerp(0f, 0.5f, flow) * (1f - 0.6f * darkness);
-            }
+            if (flowSky != null)
+                flowSky.SetBrightness(Mathf.Clamp01(Motor.Distance / Mathf.Max(1f, RunLength)));
         }
 
         void Burst(Vector3 pos, Color color)
@@ -355,6 +369,9 @@ namespace Starwick
             else Camera.SetLookTarget(Vector3.zero, false);
             Camera.Follow(Motor, dt);
 
+            Vector3 leadPos = aim >= 0 ? gates[aim].NextNode : cur + Vector3.forward * 6f;
+            if (Hollow != null) Hollow.Step(cur, leadPos, Combo.ChainCount, Combo.Pressure, dt);
+
             for (int i = 0; i < gates.Count; i++)
             {
                 var g = gates[i];
@@ -367,6 +384,7 @@ namespace Starwick
                 if (g.Test(prevPos, cur))
                 {
                     Combo.GateHit(g.PerfectCount > beforePerfect);
+                    if (Hollow != null) Hollow.React();
                     if (Sw.Sfx != null) Sw.Sfx.Note(Combo.ChainCount + g.HitCount);
                     if (g.Complete)
                     {
@@ -392,7 +410,10 @@ namespace Starwick
 
             UpdateGateVisuals();
             Combo.Tick(dt);
-            ApplyPressureDarkness();
+            ApplyDiegeticFeedback();
+
+            if (Combo.Pressure > 0.9f) fragTimer += dt;
+            else fragTimer = Mathf.Max(0f, fragTimer - dt * 0.5f);
 
             if (Hud != null)
                 Hud.Set(Motor.Speed, Combo.FlowMeter, Combo.ChainCount, Combo.StyleLabel,
@@ -400,6 +421,7 @@ namespace Starwick
 
             prevPos = cur;
 
+            if (fragTimer > 2.5f) { FinishFragment(); return; }
             if (Motor.Distance >= RunLength) Finish();
         }
 
@@ -411,6 +433,15 @@ namespace Starwick
             return -1;
         }
 
+        void CapturePostcard()
+        {
+            if (Camera != null && Camera.Cam != null)
+            {
+                PostcardImage = Postcard.Capture(Camera.Cam, 640, 360);
+                Postcard.Save(PostcardImage, "run_postcard.png");
+            }
+        }
+
         void Finish()
         {
             Running = false;
@@ -420,7 +451,28 @@ namespace Starwick
                 GatesRelit = relitCount,
                 BestChain = Combo.BestChain,
                 Starlight = relitCount * 10 + Combo.BestChain * 5,
+                Fragment = false,
             };
+            CapturePostcard();
+            PlayerProfileStore.ApplyRunResults(Results);
+            if (Hud != null) Hud.ShowResults(Results);
+        }
+
+        void FinishFragment()
+        {
+            Running = false;
+            EndedAsFragment = true;
+            if (Hollow != null) Hollow.React();
+            int full = relitCount * 10 + Combo.BestChain * 5;
+            Results = new RunResults
+            {
+                Distance = Motor.Distance,
+                GatesRelit = relitCount,
+                BestChain = Combo.BestChain,
+                Starlight = Mathf.Max(5, full / 2),
+                Fragment = true,
+            };
+            CapturePostcard();
             PlayerProfileStore.ApplyRunResults(Results);
             if (Hud != null) Hud.ShowResults(Results);
         }

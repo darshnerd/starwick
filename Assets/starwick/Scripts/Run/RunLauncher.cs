@@ -10,6 +10,14 @@ namespace Starwick
 
         bool camWasEnabled;
 
+        public bool EnterRunFromCode(string code)
+        {
+            if (!MemorySeed.TryDecode(code, out int idx, out int seed)) return false;
+            GameState.CompanionIndex = idx;
+            EnterRun(seed);
+            return true;
+        }
+
         public void EnterRun(int seed)
         {
             if (Active) return;
