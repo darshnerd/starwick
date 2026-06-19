@@ -49,6 +49,13 @@ namespace Starwick
 
         public static CompanionData Current => All[Mathf.Clamp(GameState.CompanionIndex, 0, All.Length - 1)];
 
+        public static int IndexOf(string name)
+        {
+            for (int i = 0; i < All.Length; i++)
+                if (All[i].Name == name) return i;
+            return -1;
+        }
+
         public static int UnlockedCount(int runs)
         {
             int c = 0;

@@ -40,6 +40,11 @@ namespace Starwick
             Current.TotalRuns++;
             Current.TotalStarsRelit += r.GatesRelit;
             Current.Starlight += r.Starlight;
+
+            int idx = Roster.IndexOf(Current.CurrentHollow);
+            if (idx >= 0 && Current.Bonds != null && idx < Current.Bonds.Length)
+                Current.Bonds[idx] += r.GatesRelit * 10 + r.BestChain * 5;
+
             Save();
         }
 

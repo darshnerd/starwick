@@ -26,13 +26,15 @@ namespace Starwick
 
         public bool ChoiceActive => choiceActive;
         public float ChoiceReveal => choiceReveal;
+        public bool BodyShown => body != null && body.enabled;
+        public string BodyContent => body != null ? body.text : "";
+        public float MaxBodyColorChannel => body != null ? Mathf.Max(body.color.r, body.color.g, body.color.b) : 0f;
 
         void Start()
         {
             var canvas = gameObject.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceCamera;
-            canvas.worldCamera = Sw.Cam;
-            canvas.planeDistance = 1f;
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 40;
 
             var scaler = gameObject.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
@@ -44,18 +46,18 @@ namespace Starwick
                 new Vector2(0.5f, 0.17f), new Vector2(1500f, 260f));
 
             speaker = MakeText("Speaker", Typeface.HeadingMedium, 32f, FontStyles.Normal,
-                new Color(1.7f, 1.5f, 2.2f, 1f), TextAlignmentOptions.Center,
+                new Color(0.77f, 0.68f, 1f, 1f), TextAlignmentOptions.Center,
                 new Vector2(0.5f, 0.27f), new Vector2(1400f, 50f));
 
             body = MakeText("Body", Typeface.Body, 38f, FontStyles.Normal,
-                new Color(1.35f, 1.35f, 1.45f, 1f), TextAlignmentOptions.Center,
+                new Color(0.93f, 0.93f, 1f, 1f), TextAlignmentOptions.Center,
                 new Vector2(0.5f, 0.155f), new Vector2(1400f, 190f));
 
             choiceBackdrop = MakeImage("ChoiceBackdrop", new Color(0f, 0f, 0.02f, 0.92f),
                 new Vector2(0.5f, 0.49f), new Vector2(1480f, 440f));
 
             choicePrompt = MakeText("ChoicePrompt", Typeface.Heading, 44f, FontStyles.Italic,
-                new Color(1.7f, 1.55f, 2.2f, 1f), TextAlignmentOptions.Center,
+                new Color(0.77f, 0.70f, 1f, 1f), TextAlignmentOptions.Center,
                 new Vector2(0.5f, 0.63f), new Vector2(1320f, 150f));
 
             choiceBoxA = MakeImage("ChoiceBoxA", new Color(0.12f, 0.14f, 0.3f, 0.88f),
@@ -161,10 +163,10 @@ namespace Starwick
                     Vector2 p = InputService.PointerPosition;
                     int side = 0;
                     if (choiceBoxA != null && choiceBoxA.enabled &&
-                        RectTransformUtility.RectangleContainsScreenPoint(choiceBoxA.rectTransform, p, Sw.Cam))
+                        RectTransformUtility.RectangleContainsScreenPoint(choiceBoxA.rectTransform, p, null))
                         side = 1;
                     else if (choiceBoxB != null && choiceBoxB.enabled &&
-                        RectTransformUtility.RectangleContainsScreenPoint(choiceBoxB.rectTransform, p, Sw.Cam))
+                        RectTransformUtility.RectangleContainsScreenPoint(choiceBoxB.rectTransform, p, null))
                         side = 2;
 
                     if (side != 0)

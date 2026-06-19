@@ -11,6 +11,9 @@ namespace Starwick
         AudioClip shimmer;
         AudioClip chime;
         AudioClip confirm;
+        AudioClip detune;
+        AudioClip[] notes;
+        AudioClip[] chords;
 
         void Start()
         {
@@ -25,6 +28,12 @@ namespace Starwick
             shimmer = ProcSfx.Shimmer();
             chime = ProcSfx.Chime();
             confirm = ProcSfx.Confirm();
+            detune = ProcSfx.Detune();
+
+            notes = new AudioClip[8];
+            for (int i = 0; i < notes.Length; i++) notes[i] = ProcSfx.Note(i);
+            chords = new AudioClip[4];
+            for (int i = 0; i < chords.Length; i++) chords[i] = ProcSfx.Chord(i);
         }
 
         public void Tick()
@@ -36,6 +45,28 @@ namespace Starwick
         public void Shimmer(int step)
         {
             Play(shimmer, 1f + step * 0.06f);
+            Haptics.Light();
+        }
+
+        public void Note(int degree)
+        {
+            if (notes == null) { PlayCount++; return; }
+            int d = Mathf.Clamp(degree, 0, notes.Length - 1);
+            Play(notes[d], 1f);
+            Haptics.Light();
+        }
+
+        public void Chord(int tier)
+        {
+            if (chords == null) { PlayCount++; return; }
+            int t = Mathf.Clamp(tier, 0, chords.Length - 1);
+            Play(chords[t], 1f);
+            Haptics.Medium();
+        }
+
+        public void Detune()
+        {
+            Play(detune, 1f);
             Haptics.Light();
         }
 

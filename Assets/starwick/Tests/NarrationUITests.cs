@@ -1,5 +1,4 @@
 using System.Collections;
-using System.IO;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -18,38 +17,13 @@ namespace Starwick.Tests
 
             yield return new WaitForSeconds(1.5f);
 
-            var rt = new RenderTexture(1280, 720, 24);
-            Sw.Cam.targetTexture = rt;
-            yield return null;
-            yield return null;
-            RenderTexture.active = rt;
-            var tex = new Texture2D(rt.width, rt.height, TextureFormat.RGB24, false);
-            tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
-            tex.Apply();
-            Sw.Cam.targetTexture = null;
-            RenderTexture.active = null;
+            Assert.IsNotNull(Sw.Narration, "no NarrationUI");
+            Assert.IsTrue(Sw.Narration.BodyShown, "narration body not shown while dialogue active");
+            Assert.IsNotEmpty(Sw.Narration.BodyContent, "narration body has no text");
+            Assert.LessOrEqual(Sw.Narration.MaxBodyColorChannel, 1.001f,
+                "narration text color is HDR (>1) - would bloom/fringe through post");
 
-            var px = tex.GetPixels();
-            int w = tex.width;
-            int h = tex.height;
-            int whiteLower = 0;
-            for (int y = 0; y < h / 3; y++)
-                for (int x = 0; x < w; x++)
-                {
-                    var c = px[y * w + x];
-                    float lum = 0.299f * c.r + 0.587f * c.g + 0.114f * c.b;
-                    if (lum > 0.6f) whiteLower++;
-                }
-
-            var dir = Path.Combine(Directory.GetCurrentDirectory(), "CaptureOutput");
-            Directory.CreateDirectory(dir);
-            File.WriteAllBytes(Path.Combine(dir, "m4_narration.png"), tex.EncodeToPNG());
-
-            Object.Destroy(tex);
-            rt.Release();
-
-            Debug.Log($"[swloop] m4b whiteLowerPixels={whiteLower} line='{(Sw.Dialogue.Current != null ? Sw.Dialogue.Current.Text : "")}'");
-            Assert.Greater(whiteLower, 100, "No narration text rendered in lower region");
+            Debug.Log($"[swloop] m4b bodyShown={Sw.Narration.BodyShown} maxColor={Sw.Narration.MaxBodyColorChannel:F2} line='{(Sw.Dialogue.Current != null ? Sw.Dialogue.Current.Text : "")}'");
         }
     }
 }

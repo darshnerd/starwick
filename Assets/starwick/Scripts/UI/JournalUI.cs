@@ -17,12 +17,14 @@ namespace Starwick
         int shownCount = -1;
         float indPop = 1f;
 
+        public bool ListShown => list != null && list.enabled;
+        public string ListContent => list != null ? list.text : "";
+
         void Start()
         {
             var canvas = gameObject.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceCamera;
-            canvas.worldCamera = Sw.Cam;
-            canvas.planeDistance = 0.9f;
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 60;
 
             var scaler = gameObject.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
@@ -31,14 +33,14 @@ namespace Starwick
             gameObject.AddComponent<GraphicRaycaster>();
 
             indicator = MakeText("Indicator", Typeface.HeadingMedium, 28f, FontStyles.Normal,
-                new Color(1.9f, 1.6f, 2.3f, 1f), TextAlignmentOptions.Right,
+                new Color(0.83f, 0.70f, 1f, 1f), TextAlignmentOptions.Right,
                 new Vector2(0.9f, 0.93f), new Vector2(420f, 44f));
 
             panel = MakeImage("Panel", new Color(0.01f, 0.0f, 0.04f, 0.88f),
                 new Vector2(0.5f, 0.5f), new Vector2(1320f, 780f));
 
             title = MakeText("Title", Typeface.Heading, 56f, FontStyles.Normal,
-                new Color(2.1f, 1.8f, 1.1f, 1f), TextAlignmentOptions.Top,
+                new Color(1f, 0.86f, 0.52f, 1f), TextAlignmentOptions.Top,
                 new Vector2(0.5f, 0.8f), new Vector2(1200f, 90f));
             title.text = "Memories";
 

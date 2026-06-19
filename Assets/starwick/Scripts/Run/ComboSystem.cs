@@ -7,6 +7,7 @@ namespace Starwick
         public int ChainCount { get; private set; }
         public int BestChain { get; private set; }
         public float FlowMeter { get; private set; }
+        public float Pressure { get; private set; }
         public float GraceTime = 1.2f;
         public string StyleLabel { get; private set; } = "";
 
@@ -19,6 +20,7 @@ namespace Starwick
             ChainCount++;
             if (ChainCount > BestChain) BestChain = ChainCount;
             FlowMeter = Mathf.Min(1f, FlowMeter + (perfect ? 0.18f : 0.1f));
+            Pressure = Mathf.Max(0f, Pressure - 0.05f);
             graceTimer = GraceTime;
             StyleLabel = Label(ChainCount);
         }
@@ -26,12 +28,21 @@ namespace Starwick
         public void Miss()
         {
             FlowMeter = Mathf.Max(0f, FlowMeter - 0.15f);
+            Pressure = Mathf.Min(1f, Pressure + 0.25f);
+            Break();
+        }
+
+        public void GraceLoss()
+        {
+            graceTimer = Mathf.Min(graceTimer, 0.3f);
+            Pressure = Mathf.Min(1f, Pressure + 0.15f);
         }
 
         public void Break()
         {
             ChainCount = 0;
             StyleLabel = "";
+            Pressure = Mathf.Min(1f, Pressure + 0.1f);
         }
 
         public void Tick(float dt)
@@ -43,6 +54,7 @@ namespace Starwick
             }
             if (ChainCount == 0)
                 FlowMeter = Mathf.MoveTowards(FlowMeter, 0f, dt * 0.2f);
+            Pressure = Mathf.MoveTowards(Pressure, 0f, dt * 0.2f);
         }
 
         static string Label(int chain)

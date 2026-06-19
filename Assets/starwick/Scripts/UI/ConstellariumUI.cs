@@ -18,16 +18,15 @@ namespace Starwick
         bool wasDown;
 
         static readonly Color DotDim = new Color(0.3f, 0.36f, 0.6f, 0.5f);
-        static readonly Color DotLit = new Color(2.2f, 2.0f, 1.4f, 1f);
+        static readonly Color DotLit = new Color(1f, 0.91f, 0.64f, 1f);
 
         void Start()
         {
             Sw.Constellarium = this;
 
             var canvas = gameObject.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceCamera;
-            canvas.worldCamera = Sw.Cam;
-            canvas.planeDistance = 0.88f;
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 60;
 
             var scaler = gameObject.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
@@ -38,18 +37,18 @@ namespace Starwick
             var dotTex = ProcTex.SoftDot(48);
             var dotSprite = Sprite.Create(dotTex, new Rect(0, 0, dotTex.width, dotTex.height), new Vector2(0.5f, 0.5f));
 
-            indicator = MakeText("SkyTab", Typeface.HeadingMedium, 28f, new Color(1.6f, 1.7f, 2.3f, 1f),
+            indicator = MakeText("SkyTab", Typeface.HeadingMedium, 28f, new Color(0.70f, 0.74f, 1f, 1f),
                 TextAlignmentOptions.Left, new Vector2(0.1f, 0.93f), new Vector2(420f, 44f));
             indicator.text = "your sky";
 
             panel = MakeImage("Panel", null, new Color(0.01f, 0.0f, 0.04f, 0.9f),
                 new Vector2(0.5f, 0.5f), new Vector2(1340f, 800f));
 
-            title = MakeText("Title", Typeface.Heading, 54f, new Color(2.1f, 1.8f, 1.1f, 1f),
+            title = MakeText("Title", Typeface.Heading, 54f, new Color(1f, 0.86f, 0.52f, 1f),
                 TextAlignmentOptions.Top, new Vector2(0.5f, 0.82f), new Vector2(1200f, 90f));
             title.text = "The Constellarium";
 
-            stats = MakeText("Stats", Typeface.Body, 30f, new Color(1.3f, 1.35f, 1.5f, 1f),
+            stats = MakeText("Stats", Typeface.Body, 30f, new Color(0.87f, 0.90f, 1f, 1f),
                 TextAlignmentOptions.Center, new Vector2(0.5f, 0.68f), new Vector2(1100f, 160f));
 
             int gw = 12, gh = 6;

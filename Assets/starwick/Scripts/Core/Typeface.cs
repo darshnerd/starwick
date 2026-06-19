@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.TextCore.LowLevel;
 
 namespace Starwick
 {
@@ -50,7 +51,7 @@ namespace Starwick
         {
             var font = Resources.Load<Font>(resourcePath);
             if (font == null) return null;
-            var asset = TMP_FontAsset.CreateFontAsset(font);
+            var asset = TMP_FontAsset.CreateFontAsset(font, 120, 12, GlyphRenderMode.SDFAA, 2048, 2048);
             if (asset != null) asset.name = font.name;
             return asset;
         }

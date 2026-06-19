@@ -19,9 +19,8 @@ namespace Starwick
             Sw.Title = this;
 
             var canvas = gameObject.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceCamera;
-            canvas.worldCamera = Sw.Cam;
-            canvas.planeDistance = 0.7f;
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 100;
 
             var scaler = gameObject.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
@@ -33,15 +32,15 @@ namespace Starwick
             MakeImage("Veil", new Color(0f, 0f, 0.02f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(4000f, 4000f));
 
             var title = MakeText("Title", Typeface.Heading, 150f, FontStyles.Normal,
-                new Color(1.9f, 1.8f, 2.5f, 1f), new Vector2(0.5f, 0.58f), new Vector2(1700f, 240f));
+                new Color(0.76f, 0.72f, 1f, 1f), new Vector2(0.5f, 0.58f), new Vector2(1700f, 240f));
             title.text = "Starwick";
 
             var tag = MakeText("Tagline", Typeface.Body, 38f, FontStyles.Italic,
-                new Color(1.2f, 1.25f, 1.5f, 1f), new Vector2(0.5f, 0.47f), new Vector2(1400f, 80f));
+                new Color(0.80f, 0.83f, 1f, 1f), new Vector2(0.5f, 0.47f), new Vector2(1400f, 80f));
             tag.text = "relight the dying sky";
 
             hint = MakeText("Hint", Typeface.BodyMedium, 40f, FontStyles.Normal,
-                new Color(1.4f, 1.4f, 1.7f, 1f), new Vector2(0.5f, 0.32f), new Vector2(1200f, 80f));
+                new Color(0.82f, 0.82f, 1f, 1f), new Vector2(0.5f, 0.32f), new Vector2(1200f, 80f));
             hint.text = "tap to begin";
 
             if (Application.isBatchMode) Hide();

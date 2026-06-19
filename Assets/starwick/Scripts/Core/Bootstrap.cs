@@ -120,6 +120,13 @@ namespace Starwick
             sfxGo.transform.SetParent(root.transform);
             sfxGo.AddComponent<SfxManager>();
 
+            if (!Application.isBatchMode)
+            {
+                var modeGo = new GameObject("ModeSelectUI");
+                modeGo.transform.SetParent(root.transform);
+                modeGo.AddComponent<ModeSelectUI>();
+            }
+
             root.AddComponent<SwTestHarness>();
             Sw.Booted = true;
         }
