@@ -37,7 +37,7 @@ namespace Starwick
             float c0 = CenterXFor(seed, d - 3f);
             float c1 = CenterXFor(seed, d + 3f);
             float turn = (c1 - c0) / 6f;
-            return Mathf.Clamp(-turn * 26f, -24f, 24f);
+            return Mathf.Clamp(-turn * 30f, -26f, 26f);
         }
 
         public void AddRamp(float d, float amp, float width)
@@ -78,7 +78,11 @@ namespace Starwick
             Vector3 tan = Tangent(d);
             Vector3 right = Vector3.Cross(Vector3.up, tan);
             right = right.sqrMagnitude > 0.0001f ? right.normalized : Vector3.right;
-            return new TrackFrame { Center = c, Tangent = tan, Right = right };
+            Quaternion roll = Quaternion.AngleAxis(Bank(d), tan);
+            right = roll * right;
+            Vector3 up = Vector3.Cross(tan, right);
+            up = up.sqrMagnitude > 0.0001f ? up.normalized : Vector3.up;
+            return new TrackFrame { Center = c, Tangent = tan, Right = right, Up = up };
         }
 
         public Vector3 SurfaceAt(float d, float lane)
@@ -93,5 +97,6 @@ namespace Starwick
         public Vector3 Center;
         public Vector3 Tangent;
         public Vector3 Right;
+        public Vector3 Up;
     }
 }

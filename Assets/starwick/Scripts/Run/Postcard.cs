@@ -13,20 +13,26 @@ namespace Starwick
             var rt = new RenderTexture(w, h, 24);
             var prevTarget = cam.targetTexture;
             var prevActive = RenderTexture.active;
+            Texture2D tex = null;
 
-            cam.targetTexture = rt;
-            cam.Render();
+            try
+            {
+                cam.targetTexture = rt;
+                cam.Render();
+                RenderTexture.active = rt;
+                tex = new Texture2D(w, h, TextureFormat.RGB24, false);
+                tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+                tex.Apply();
+            }
+            finally
+            {
+                cam.targetTexture = prevTarget;
+                RenderTexture.active = prevActive;
+                rt.Release();
+                Object.Destroy(rt);
+            }
 
-            RenderTexture.active = rt;
-            var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
-            tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
-            tex.Apply();
-
-            cam.targetTexture = prevTarget;
-            RenderTexture.active = prevActive;
-            rt.Release();
-            Object.Destroy(rt);
-
+            if (Last != null) Object.Destroy(Last);
             Last = tex;
             return tex;
         }

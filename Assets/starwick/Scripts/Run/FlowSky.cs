@@ -8,6 +8,8 @@ namespace Starwick
         public float Radius = 150f;
         public float Brightness { get; private set; } = 1f;
 
+        static FlowSky fogOwner;
+
         ParticleSystem stars;
         ParticleSystem nebula;
         Material starMat;
@@ -17,7 +19,6 @@ namespace Starwick
         Color fogColorWas;
         float fogStartWas;
         float fogEndWas;
-        bool fogCaptured;
 
         void Awake()
         {
@@ -74,15 +75,14 @@ namespace Starwick
 
         void OnEnable()
         {
-            if (!fogCaptured)
-            {
-                fogWas = RenderSettings.fog;
-                fogModeWas = RenderSettings.fogMode;
-                fogColorWas = RenderSettings.fogColor;
-                fogStartWas = RenderSettings.fogStartDistance;
-                fogEndWas = RenderSettings.fogEndDistance;
-                fogCaptured = true;
-            }
+            if (fogOwner != null) return;
+            fogOwner = this;
+            fogWas = RenderSettings.fog;
+            fogModeWas = RenderSettings.fogMode;
+            fogColorWas = RenderSettings.fogColor;
+            fogStartWas = RenderSettings.fogStartDistance;
+            fogEndWas = RenderSettings.fogEndDistance;
+
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
             RenderSettings.fogColor = new Color(0.02f, 0.03f, 0.07f);
@@ -92,12 +92,13 @@ namespace Starwick
 
         void RestoreFog()
         {
-            if (!fogCaptured) return;
+            if (fogOwner != this) return;
             RenderSettings.fog = fogWas;
             RenderSettings.fogMode = fogModeWas;
             RenderSettings.fogColor = fogColorWas;
             RenderSettings.fogStartDistance = fogStartWas;
             RenderSettings.fogEndDistance = fogEndWas;
+            fogOwner = null;
         }
 
         void OnDisable() => RestoreFog();

@@ -48,6 +48,7 @@ namespace Starwick
                 Color.white, TextAlignmentOptions.TopLeft,
                 new Vector2(0.5f, 0.44f), new Vector2(1180f, 560f));
 
+            SafeArea.Apply(canvas);
             SetOpen(false);
         }
 

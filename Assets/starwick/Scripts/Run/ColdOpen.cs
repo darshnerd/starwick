@@ -22,6 +22,9 @@ namespace Starwick
         Vector3 hollowRest;
         float descent;
         bool wasDown;
+        Vector2 lastPointer;
+        float travelGlow;
+        float passiveGlow;
 
         static readonly Color WickDim = new Color(0.25f, 0.2f, 0.12f, 1f);
         static readonly Color WickLit = new Color(2.9f, 2.1f, 1.2f, 1f);
@@ -89,11 +92,20 @@ namespace Starwick
 
             bool down = InputService.PointerDown;
 
-            if (down && State == Stage.Idle) Light();
+            if (down && State == Stage.Idle)
+            {
+                Light();
+                lastPointer = InputService.PointerPosition;
+            }
 
             if (down && (State == Stage.Lit || State == Stage.Pulling))
             {
-                ThreadLength = Mathf.Min(1f, ThreadLength + 0.06f);
+                Vector2 p = InputService.PointerPosition;
+                float travel = (p - lastPointer).magnitude;
+                lastPointer = p;
+                travelGlow = Mathf.Clamp01(travelGlow + travel * 0.004f);
+                passiveGlow = Mathf.Min(0.45f, passiveGlow + dt * 0.12f);
+                ThreadLength = Mathf.Clamp01(travelGlow + passiveGlow);
                 if (ThreadLength > 0.05f) State = Stage.Pulling;
                 RefreshThread();
             }
@@ -101,7 +113,7 @@ namespace Starwick
             if (!down && wasDown && State == Stage.Pulling)
             {
                 if (ThreadLength >= OpenThreshold) Open();
-                else { State = Stage.Lit; ThreadLength = 0f; RefreshThread(); }
+                else { State = Stage.Lit; ThreadLength = 0f; travelGlow = 0f; passiveGlow = 0f; RefreshThread(); }
             }
 
             wasDown = down;
@@ -135,12 +147,16 @@ namespace Starwick
             if (AutoLaunch && !Application.isBatchMode) Launch();
         }
 
+        public static int SeedForRun(int runs)
+        {
+            return Roster.Current.Seed + runs * 17 + 1;
+        }
+
         void Launch()
         {
-            var go = new GameObject("RunLauncher");
-            var launcher = go.AddComponent<RunLauncher>();
-            int seed = Roster.Current.Seed + SaveData.RunsCompleted * 17 + 1;
-            launcher.EnterRun(seed);
+            int runs = PlayerProfileStore.Current != null ? PlayerProfileStore.Current.TotalRuns : 0;
+            int seed = SeedForRun(runs);
+            if (Sw.RunSession != null) Sw.RunSession.Enter(seed);
             gameObject.SetActive(false);
         }
     }

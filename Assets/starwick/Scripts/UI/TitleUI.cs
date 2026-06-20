@@ -43,6 +43,7 @@ namespace Starwick
                 new Color(0.82f, 0.82f, 1f, 1f), new Vector2(0.5f, 0.32f), new Vector2(1200f, 80f));
             hint.text = "tap to begin";
 
+            SafeArea.Apply(canvas);
             if (Application.isBatchMode) Hide();
             else Show();
         }

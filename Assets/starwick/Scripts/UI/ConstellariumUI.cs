@@ -63,6 +63,7 @@ namespace Starwick
                     dots.Add(d);
                 }
 
+            SafeArea.Apply(canvas);
             SetOpen(false);
         }
 

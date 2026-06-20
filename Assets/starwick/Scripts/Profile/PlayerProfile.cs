@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Starwick
 {
     [System.Serializable]
@@ -11,5 +13,6 @@ namespace Starwick
         public string CurrentHollow = "Vesp";
         public int HearthRestored;
         public int[] Bonds = new int[4];
+        public List<string> MemoryArchive = new List<string>();
     }
 }

@@ -17,6 +17,7 @@ namespace Starwick
         public bool EndedAsFragment { get; private set; }
         public RunResults Results { get; private set; }
         public Texture2D PostcardImage { get; private set; }
+        public ResultRitual Ritual { get; private set; }
         public RunHUD Hud;
 
         public int GlyphLineCount => gateLines.Count;
@@ -25,6 +26,31 @@ namespace Starwick
         public float WickDim { get; private set; }
         public float TrailWidth => trail != null ? trail.startWidth : 0f;
         public float SkyLevel => flowSky != null ? flowSky.Brightness : 0f;
+        public int BranchOptions => branchOptions;
+        public int ChosenBranch => chosenBranch;
+        public int ChosenRoute => chosenRoute;
+        public int RouteBonus => routeBonus;
+        public float ApproachHum => humSrc != null ? humSrc.volume : 0f;
+        public int RampMarkers => rampMarkers;
+        public int PerfectBlooms => perfectBlooms;
+        public int GateCount => gates.Count;
+
+        public Color RouteColor(int route) => RouteColorFor(route);
+        public int GateRoute(int i) => i >= 0 && i < gateRoute.Count ? gateRoute[i] : -1;
+        public int GateBranchAt(int i) => i >= 0 && i < gateBranch.Count ? gateBranch[i] : 0;
+        public float GatePop(int i) => i >= 0 && i < gatePop.Count ? gatePop[i] : 0f;
+
+        public float GateGlow(int i)
+        {
+            if (i < 0 || i >= gateNodeMats.Count) return 0f;
+            float b = 0f;
+            foreach (var mat in gateNodeMats[i])
+            {
+                var c = mat.color;
+                b = Mathf.Max(b, Mathf.Max(c.r, Mathf.Max(c.g, c.b)));
+            }
+            return b;
+        }
 
         readonly List<ConstellationGate> gates = new List<ConstellationGate>();
         readonly List<Transform[]> gateNodes = new List<Transform[]>();
@@ -33,16 +59,29 @@ namespace Starwick
         readonly List<float> gateEndDist = new List<float>();
         readonly List<float> gateMinApproach = new List<float>();
         readonly List<bool> gateResolved = new List<bool>();
+        readonly List<int> gateBranch = new List<int>();
+        readonly List<int> gateRoute = new List<int>();
+        readonly List<float> gatePop = new List<float>();
+        int chosenBranch = -1;
+        int chosenRoute = -1;
+        int branchOptions;
+        int routeBonus;
+        bool memoryCreated;
         Transform wickVisual;
         TrailRenderer trail;
         Light wickLight;
         Material wickMat;
+        Material burstMat;
         AudioSource harmonySrc;
+        AudioSource humSrc;
         FlowSky flowSky;
+        int rampMarkers;
+        int perfectBlooms;
         Vector3 prevPos;
         int relitCount;
         float runClock;
         float fragTimer;
+        int runSeed;
 
         static readonly Color WickWarm = new Color(2.9f, 2.1f, 1.2f, 1f);
         static readonly Color WickDark = new Color(0.7f, 0.6f, 0.95f, 1f);
@@ -51,9 +90,70 @@ namespace Starwick
         static readonly Color NodeBright = new Color(2.8f, 2.2f, 1.2f, 1f);
         static readonly Color NodeCool = new Color(0.55f, 0.72f, 1.6f, 1f);
         static readonly Color NodeRelight = new Color(1.7f, 0.7f, 0.35f, 1f);
+        static readonly Color PerfectGlow = new Color(2.9f, 2.4f, 1.6f, 1f);
+
+        static readonly Color[] RouteTint =
+        {
+            new Color(0.55f, 0.95f, 1.5f, 1f),
+            new Color(1.3f, 0.75f, 1.8f, 1f),
+            new Color(1.8f, 0.45f, 0.4f, 1f),
+            new Color(1.2f, 1.6f, 0.9f, 1f),
+        };
+
+        Color RouteColorFor(int route)
+        {
+            if (route == 3)
+            {
+                var g = Roster.Current.Glow;
+                return new Color(g.r * 1.3f + 0.2f, g.g * 1.3f + 0.2f, g.b * 1.3f + 0.2f, 1f);
+            }
+            if (route >= 0 && route < RouteTint.Length) return RouteTint[route];
+            return NodeCool;
+        }
+
+        void ClearRunObjects()
+        {
+            for (int i = transform.childCount - 1; i >= 0; i--) Destroy(transform.GetChild(i).gameObject);
+            if (harmonySrc != null) { Destroy(harmonySrc); harmonySrc = null; }
+            if (humSrc != null) { Destroy(humSrc); humSrc = null; }
+            if (burstMat != null) { Destroy(burstMat); burstMat = null; }
+            gates.Clear();
+            gateNodes.Clear();
+            gateNodeMats.Clear();
+            gateLines.Clear();
+            gateEndDist.Clear();
+            gateMinApproach.Clear();
+            gateResolved.Clear();
+            gateBranch.Clear();
+            gateRoute.Clear();
+            gatePop.Clear();
+            chosenBranch = -1;
+            chosenRoute = -1;
+            branchOptions = 0;
+            routeBonus = 0;
+            memoryCreated = false;
+            Track = null;
+            Motor = null;
+            Camera = null;
+            Hollow = null;
+            flowSky = null;
+            trail = null;
+            wickLight = null;
+            wickMat = null;
+            wickVisual = null;
+            Ritual = null;
+            Running = false;
+        }
 
         public void Begin(int seed)
         {
+            if (Track != null) ClearRunObjects();
+            runSeed = seed;
+            rampMarkers = 0;
+            perfectBlooms = 0;
+            memoryCreated = false;
+            burstMat = new Material(Shader.Find("Sprites/Default"));
+
             var tGo = new GameObject("RunTrack");
             tGo.transform.SetParent(transform);
             tGo.SetActive(false);
@@ -62,13 +162,20 @@ namespace Starwick
             tGo.SetActive(true);
 
             foreach (var r in RunRhythmPlan.Ramps(seed, RunLength))
+            {
                 Track.Track.AddRamp(r.Distance, r.Amplitude, r.Width);
+                MakeRampSilhouette(r.Distance);
+            }
 
             var mGo = new GameObject("Wick");
             mGo.transform.SetParent(transform);
             Motor = mGo.AddComponent<WickFlowMotor>();
             Motor.GroundAt = d => Track.Track.Height(d);
-            Motor.WorldAt = (d, lane, h) => { var p = Track.Track.SurfaceAt(d, lane); p.y = h; return p; };
+            Motor.WorldAt = (d, lane, h) =>
+            {
+                var fr = Track.Track.Sample(d);
+                return fr.Center + fr.Right * lane + fr.Up * (h - fr.Center.y);
+            };
             Motor.Height = Track.Track.Height(0f);
 
             var cGo = new GameObject("FlowCam");
@@ -93,6 +200,15 @@ namespace Starwick
             harmonySrc.volume = 0f;
             harmonySrc.Play();
 
+            humSrc = gameObject.AddComponent<AudioSource>();
+            humSrc.clip = ProcAudio.Pad(6);
+            humSrc.loop = true;
+            humSrc.spatialBlend = 0f;
+            humSrc.playOnAwake = false;
+            humSrc.volume = 0f;
+            humSrc.pitch = 0.7f;
+            humSrc.Play();
+
             Combo = new ComboSystem();
             gates.Clear();
             gateNodes.Clear();
@@ -101,6 +217,13 @@ namespace Starwick
             gateEndDist.Clear();
             gateMinApproach.Clear();
             gateResolved.Clear();
+            gateBranch.Clear();
+            gateRoute.Clear();
+            gatePop.Clear();
+            chosenBranch = -1;
+            chosenRoute = -1;
+            branchOptions = 0;
+            routeBonus = 0;
             relitCount = 0;
             runClock = 0f;
             fragTimer = 0f;
@@ -115,6 +238,25 @@ namespace Starwick
             RelightFired = false;
             EndedAsFragment = false;
             Running = true;
+        }
+
+        void MakeRampSilhouette(float d)
+        {
+            var fr = Track.Track.Sample(d);
+            var go = new GameObject("RampSilhouette");
+            go.transform.SetParent(transform);
+            go.transform.position = fr.Center + fr.Up * 0.2f;
+            go.transform.rotation = Quaternion.LookRotation(fr.Up, fr.Tangent);
+            go.transform.localScale = Vector3.one * 4f;
+            var mf = go.AddComponent<MeshFilter>();
+            mf.sharedMesh = QuadMesh();
+            var mr = go.AddComponent<MeshRenderer>();
+            var m = new Material(Shader.Find("Sprites/Default"));
+            m.mainTexture = ProcTex.SoftDot(64);
+            m.color = new Color(1.7f, 1.25f, 0.7f, 0.6f);
+            mr.material = m;
+            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            rampMarkers++;
         }
 
         void BuildWickVisual()
@@ -193,6 +335,7 @@ namespace Starwick
             foreach (var spec in RunRhythmPlan.Build(seed, RunLength))
             {
                 bool relight = spec.Kind == ConstellationGate.Kind.Relight;
+                bool branch = spec.Branch > 0;
                 var nodes = new List<Vector3>();
                 float end = spec.Distance;
                 for (int i = 0; i < spec.Nodes; i++)
@@ -207,8 +350,13 @@ namespace Starwick
                 gateEndDist.Add(end);
                 gateMinApproach.Add(float.MaxValue);
                 gateResolved.Add(false);
+                gateBranch.Add(spec.Branch);
+                gateRoute.Add(spec.Route);
+                gatePop.Add(0f);
+                if (branch) branchOptions++;
 
                 Color dim = relight ? NodeRelight : NodeCool;
+                if (branch) dim = RouteColorFor(spec.Route);
                 var quads = new Transform[nodes.Count];
                 var mats = new Material[nodes.Count];
                 for (int i = 0; i < nodes.Count; i++)
@@ -230,7 +378,7 @@ namespace Starwick
                 lr.textureMode = LineTextureMode.Stretch;
                 lr.positionCount = nodes.Count;
                 for (int i = 0; i < nodes.Count; i++) lr.SetPosition(i, nodes[i]);
-                Color threadDim = (relight ? NodeRelight : NodeCool) * 0.5f;
+                Color threadDim = dim * 0.5f;
                 threadDim.a = 1f;
                 lr.startColor = threadDim;
                 lr.endColor = threadDim;
@@ -241,12 +389,20 @@ namespace Starwick
         void UpdateGateVisuals()
         {
             Vector3 camPos = Camera != null && Camera.VisualCam != null ? Camera.VisualCam.position : Vector3.zero;
+            int aim = NextGateIndex();
+            float decay = 3f * Mathf.Max(0.0001f, Time.deltaTime);
             for (int i = 0; i < gates.Count; i++)
             {
                 var g = gates[i];
                 var mats = gateNodeMats[i];
                 var quads = gateNodes[i];
-                Color dim = g.Type == ConstellationGate.Kind.Relight ? NodeRelight : NodeCool;
+                bool relight = g.Type == ConstellationGate.Kind.Relight;
+                Color dim = relight ? NodeRelight : NodeCool;
+                if (gateBranch[i] > 0) dim = RouteColorFor(gateRoute[i]);
+                float preview = i == aim ? 1.25f : 1f;
+                gatePop[i] = Mathf.MoveTowards(gatePop[i], 0f, decay);
+                float baseS = relight ? 2.1f : 1.6f;
+                float scale = baseS * (1f - 0.3f * gatePop[i]);
                 for (int j = 0; j < mats.Length; j++)
                 {
                     Color c;
@@ -257,12 +413,13 @@ namespace Starwick
                     else
                     {
                         float pulse = 0.7f + 0.3f * Mathf.Sin(runClock * 3f + i * 0.7f + j * 0.4f);
-                        c = dim * pulse;
+                        c = dim * pulse * preview;
                         c.a = 1f;
                     }
                     mats[j].color = c;
                     if (quads[j] != null)
                     {
+                        quads[j].localScale = Vector3.one * scale;
                         Vector3 to = quads[j].position - camPos;
                         if (to.sqrMagnitude > 0.0001f) quads[j].rotation = Quaternion.LookRotation(to.normalized, Vector3.up);
                     }
@@ -271,8 +428,7 @@ namespace Starwick
                 if (i < gateLines.Count && gateLines[i] != null)
                 {
                     float lit = g.Complete ? 1f : Mathf.Clamp01(g.HitCount / Mathf.Max(1f, mats.Length));
-                    Color baseC = g.Type == ConstellationGate.Kind.Relight ? NodeRelight : NodeCool;
-                    Color lc = baseC * Mathf.Lerp(0.5f, 1.4f, lit);
+                    Color lc = dim * Mathf.Lerp(0.5f, 1.4f, lit) * preview;
                     lc.a = 1f;
                     gateLines[i].startColor = lc;
                     gateLines[i].endColor = lc;
@@ -332,8 +488,37 @@ namespace Starwick
             shape.shapeType = ParticleSystemShapeType.Sphere;
             shape.radius = 0.3f;
             var r = ps.GetComponent<ParticleSystemRenderer>();
-            r.material = new Material(Shader.Find("Sprites/Default"));
+            r.sharedMaterial = burstMat;
             ps.Play();
+        }
+
+        void ApplyRoute(int route)
+        {
+            switch (route)
+            {
+                case 0:
+                    routeBonus += 15;
+                    break;
+                case 1:
+                    routeBonus += 5;
+                    RecordMemory($"the weave remembered a fragment near {Mathf.RoundToInt(Motor.Distance)}m.");
+                    break;
+                case 2:
+                    routeBonus += 40;
+                    if (Combo != null) Combo.Strain(0.4f);
+                    break;
+                case 3:
+                    routeBonus += 10;
+                    HollowBond.Add(GameState.CompanionIndex, 60);
+                    break;
+            }
+        }
+
+        void RecordMemory(string memory)
+        {
+            GameState.AddFragment(memory);
+            PlayerProfileStore.AddMemory(memory);
+            memoryCreated = true;
         }
 
         void Update()
@@ -365,12 +550,19 @@ namespace Starwick
 
             int aim = NextGateIndex();
             Camera.Bank = Track.Track.Bank(Motor.Distance);
+            Camera.Forward = Track.Track.Tangent(Motor.Distance);
             if (aim >= 0) Camera.SetLookTarget(gates[aim].NextNode, true);
             else Camera.SetLookTarget(Vector3.zero, false);
             Camera.Follow(Motor, dt);
 
             Vector3 leadPos = aim >= 0 ? gates[aim].NextNode : cur + Vector3.forward * 6f;
             if (Hollow != null) Hollow.Step(cur, leadPos, Combo.ChainCount, Combo.Pressure, dt);
+
+            if (humSrc != null)
+            {
+                float hum = aim >= 0 ? Mathf.Clamp01(1f - Vector3.Distance(cur, gates[aim].NextNode) / 40f) * 0.32f : 0f;
+                humSrc.volume = Mathf.MoveTowards(humSrc.volume, hum, dt * 0.8f);
+            }
 
             for (int i = 0; i < gates.Count; i++)
             {
@@ -384,6 +576,20 @@ namespace Starwick
                 if (g.Test(prevPos, cur))
                 {
                     Combo.GateHit(g.PerfectCount > beforePerfect);
+                    if (g.PerfectCount > beforePerfect)
+                    {
+                        perfectBlooms++;
+                        gatePop[i] = 1f;
+                        Camera.Punch();
+                        Burst(cur, PerfectGlow);
+                    }
+                    if (gateBranch[i] > 0 && chosenBranch < 0)
+                    {
+                        chosenBranch = gateBranch[i];
+                        chosenRoute = gateRoute[i];
+                        ApplyRoute(chosenRoute);
+                        LockOutSiblings(i);
+                    }
                     if (Hollow != null) Hollow.React();
                     if (Sw.Sfx != null) Sw.Sfx.Note(Combo.ChainCount + g.HitCount);
                     if (g.Complete)
@@ -404,6 +610,7 @@ namespace Starwick
                 {
                     gateResolved[i] = true;
                     Combo.Miss();
+                    if (gateMinApproach[i] < 3.5f) Burst(g.NextNode, NodeCool);
                     if (Sw.Sfx != null) Sw.Sfx.Detune();
                 }
             }
@@ -416,8 +623,17 @@ namespace Starwick
             else fragTimer = Mathf.Max(0f, fragTimer - dt * 0.5f);
 
             if (Hud != null)
+            {
+                float progress = Mathf.Clamp01(Motor.Distance / Mathf.Max(1f, RunLength));
+                float bearing = 0f;
+                if (aim >= 0 && Camera != null && Camera.Cam != null)
+                {
+                    var vp = Camera.Cam.WorldToViewportPoint(gates[aim].NextNode);
+                    if (vp.z > 0f) bearing = Mathf.Clamp((vp.x - 0.5f) * 2f, -1f, 1f);
+                }
                 Hud.Set(Motor.Speed, Combo.FlowMeter, Combo.ChainCount, Combo.StyleLabel,
-                    Motor.Distance, relitCount, Combo.Pressure);
+                    Motor.Distance, relitCount, Combo.Pressure, progress, bearing);
+            }
 
             prevPos = cur;
 
@@ -433,6 +649,19 @@ namespace Starwick
             return -1;
         }
 
+        void LockOutSiblings(int chosenIdx)
+        {
+            for (int j = 0; j < gates.Count; j++)
+            {
+                if (j == chosenIdx || gateBranch[j] != chosenBranch) continue;
+                gateResolved[j] = true;
+                var quads = gateNodes[j];
+                for (int k = 0; k < quads.Length; k++)
+                    if (quads[k] != null) quads[k].gameObject.SetActive(false);
+                if (j < gateLines.Count && gateLines[j] != null) gateLines[j].enabled = false;
+            }
+        }
+
         void CapturePostcard()
         {
             if (Camera != null && Camera.Cam != null)
@@ -442,20 +671,40 @@ namespace Starwick
             }
         }
 
-        void Finish()
+        void StartRitual()
         {
-            Running = false;
-            Results = new RunResults
+            var go = new GameObject("ResultRitual");
+            go.transform.SetParent(transform);
+            Ritual = go.AddComponent<ResultRitual>();
+            Ritual.Begin(Results, PostcardImage, GameState.CompanionIndex, runSeed);
+        }
+
+        RunResults BuildResults(int starlight, bool fragment)
+        {
+            return new RunResults
             {
                 Distance = Motor.Distance,
                 GatesRelit = relitCount,
                 BestChain = Combo.BestChain,
-                Starlight = relitCount * 10 + Combo.BestChain * 5,
-                Fragment = false,
+                Starlight = starlight,
+                Fragment = fragment,
+                HollowIndex = GameState.CompanionIndex,
+                RouteId = chosenRoute,
+                RouteBonus = routeBonus,
+                PerfectCount = perfectBlooms,
+                Seed = runSeed,
+                MemoryCreated = memoryCreated,
             };
+        }
+
+        void Finish()
+        {
+            Running = false;
+            Results = BuildResults(relitCount * 10 + Combo.BestChain * 5 + routeBonus, false);
             CapturePostcard();
+            StartRitual();
             PlayerProfileStore.ApplyRunResults(Results);
-            if (Hud != null) Hud.ShowResults(Results);
+            if (Hud != null) Hud.Fade();
         }
 
         void FinishFragment()
@@ -463,18 +712,13 @@ namespace Starwick
             Running = false;
             EndedAsFragment = true;
             if (Hollow != null) Hollow.React();
-            int full = relitCount * 10 + Combo.BestChain * 5;
-            Results = new RunResults
-            {
-                Distance = Motor.Distance,
-                GatesRelit = relitCount,
-                BestChain = Combo.BestChain,
-                Starlight = Mathf.Max(5, full / 2),
-                Fragment = true,
-            };
+            int full = relitCount * 10 + Combo.BestChain * 5 + routeBonus;
+            RecordMemory($"a run that slipped into the dark near {Mathf.RoundToInt(Motor.Distance)}m - {Roster.Current.Name} carried you home.");
+            Results = BuildResults(Mathf.Max(5, full / 2), true);
             CapturePostcard();
+            StartRitual();
             PlayerProfileStore.ApplyRunResults(Results);
-            if (Hud != null) Hud.ShowResults(Results);
+            if (Hud != null) Hud.Fade();
         }
     }
 }

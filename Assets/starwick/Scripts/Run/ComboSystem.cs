@@ -45,6 +45,11 @@ namespace Starwick
             Pressure = Mathf.Min(1f, Pressure + 0.1f);
         }
 
+        public void Strain(float amt)
+        {
+            Pressure = Mathf.Clamp01(Pressure + amt);
+        }
+
         public void Tick(float dt)
         {
             if (ChainCount > 0)

@@ -39,6 +39,7 @@ namespace Starwick
             MakeText("FlowLabel", Typeface.BodyMedium, 40f, Color.white,
                 new Vector2(0.68f, 0.45f), new Vector2(500f, 120f), "flow run");
 
+            SafeArea.Apply(canvas);
             SetVisible(false);
         }
 

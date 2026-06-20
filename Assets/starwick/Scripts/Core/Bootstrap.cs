@@ -17,6 +17,7 @@ namespace Starwick
             GameState.Reset();
             SaveData.Load();
             SaveData.MarkCompanionSeen(GameState.CompanionIndex);
+            PlayerProfileStore.Load();
 
             var root = new GameObject("Starwick");
             Object.DontDestroyOnLoad(root);
@@ -119,6 +120,10 @@ namespace Starwick
             var sfxGo = new GameObject("SfxManager");
             sfxGo.transform.SetParent(root.transform);
             sfxGo.AddComponent<SfxManager>();
+
+            var sessGo = new GameObject("RunSession");
+            sessGo.transform.SetParent(root.transform);
+            Sw.RunSession = sessGo.AddComponent<RunSession>();
 
             if (!Application.isBatchMode)
             {

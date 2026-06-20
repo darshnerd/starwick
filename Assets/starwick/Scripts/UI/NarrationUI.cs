@@ -72,6 +72,7 @@ namespace Starwick
                 Color.white, TextAlignmentOptions.Center,
                 new Vector2(0.7f, 0.41f), new Vector2(500f, 110f));
 
+            SafeArea.Apply(canvas);
             SetVisible(false);
             SetChoiceVisible(false);
 

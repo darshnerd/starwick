@@ -22,6 +22,7 @@ namespace Starwick
         public static Director Director;
         public static AudioManager Audio;
         public static SfxManager Sfx;
+        public static RunSession RunSession;
         public static bool Booted;
         public static bool AmbientStarted;
         public static bool MotifStarted;

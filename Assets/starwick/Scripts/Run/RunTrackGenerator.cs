@@ -22,27 +22,71 @@ namespace Starwick
         public RunTrack Track { get; private set; }
         public int ActiveChunks => active.Count;
         public int LastChunkVertexCount { get; private set; }
+        public int TrackRenderQueue => mat != null ? mat.renderQueue : 0;
+        public int SparkBudget => sparks != null ? sparks.main.maxParticles : 0;
 
         readonly Dictionary<int, GameObject> active = new Dictionary<int, GameObject>();
         readonly Queue<GameObject> pool = new Queue<GameObject>();
         readonly List<int> tmpRemove = new List<int>();
         Material mat;
         Material seamMat;
+        ParticleSystem sparks;
 
-        static readonly Color SeamWarm = new Color(1.5f, 1.3f, 0.8f, 1f);
-        static readonly Color SeamCool = new Color(0.45f, 0.62f, 1.35f, 1f);
+        static readonly Color SeamWarm = new Color(1.9f, 1.6f, 1.0f, 1f);
+        static readonly Color SeamCool = new Color(0.55f, 0.78f, 1.7f, 1f);
 
         void Awake()
         {
             Track = new RunTrack(Seed);
+
             mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-            mat.SetColor("_BaseColor", new Color(0.07f, 0.08f, 0.14f));
-            mat.SetFloat("_Smoothness", 0.4f);
+            mat.SetFloat("_Surface", 1f);
+            mat.SetFloat("_Blend", 0f);
+            mat.SetFloat("_ZWrite", 0f);
+            mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+            mat.SetOverrideTag("RenderType", "Transparent");
+            mat.renderQueue = (int)RenderQueue.Transparent;
+            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            mat.SetColor("_BaseColor", new Color(0.10f, 0.13f, 0.27f, 0.5f));
+            mat.SetFloat("_Smoothness", 0.55f);
             mat.SetFloat("_Metallic", 0f);
             mat.EnableKeyword("_EMISSION");
-            mat.SetColor("_EmissionColor", new Color(0.04f, 0.05f, 0.11f));
+            mat.SetColor("_EmissionColor", new Color(0.10f, 0.14f, 0.32f));
+
             seamMat = new Material(Shader.Find("Sprites/Default"));
+
+            BuildSparks();
             Advance(0f);
+        }
+
+        void BuildSparks()
+        {
+            var go = new GameObject("EdgeSparks");
+            go.transform.SetParent(transform, false);
+            sparks = go.AddComponent<ParticleSystem>();
+            sparks.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            var main = sparks.main;
+            main.loop = true;
+            main.playOnAwake = true;
+            main.startLifetime = 1.6f;
+            main.startSpeed = 0.6f;
+            main.startSize = new ParticleSystem.MinMaxCurve(0.06f, 0.22f);
+            main.startColor = new ParticleSystem.MinMaxGradient(
+                new Color(2.2f, 1.8f, 1.1f, 1f), new Color(0.7f, 0.9f, 2.0f, 1f));
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.maxParticles = 40;
+            var emission = sparks.emission;
+            emission.enabled = true;
+            emission.rateOverTime = 14f;
+            var shape = sparks.shape;
+            shape.shapeType = ParticleSystemShapeType.Box;
+            shape.scale = new Vector3(10f, 0.4f, ChunkLength);
+            var r = sparks.GetComponent<ParticleSystemRenderer>();
+            r.material = new Material(Shader.Find("Sprites/Default")) { mainTexture = ProcTex.SoftDot(64) };
+            r.renderMode = ParticleSystemRenderMode.Billboard;
+            sparks.Play();
         }
 
         public void Advance(float distance)
@@ -63,6 +107,15 @@ namespace Starwick
             for (int i = from; i <= to; i++)
                 if (i >= 0 && !active.ContainsKey(i))
                     active[i] = BuildChunk(i);
+
+            if (sparks != null)
+            {
+                var fr = Track.Sample(distance + ChunkLength * 0.4f);
+                sparks.transform.position = fr.Center + fr.Up * 0.3f;
+                sparks.transform.rotation = Quaternion.LookRotation(fr.Tangent, fr.Up);
+                var shape = sparks.shape;
+                shape.scale = new Vector3(Track.Width(distance) + 2f, 0.4f, ChunkLength * 0.8f);
+            }
         }
 
         GameObject BuildChunk(int index)
@@ -103,9 +156,9 @@ namespace Starwick
             var mr = go.AddComponent<MeshRenderer>();
             mr.sharedMaterial = mat;
             var parts = go.AddComponent<ChunkParts>();
-            parts.Center = NewSeam(go.transform, 0.22f, SeamWarm);
-            parts.Left = NewSeam(go.transform, 0.13f, SeamCool);
-            parts.Right = NewSeam(go.transform, 0.13f, SeamCool);
+            parts.Center = NewSeam(go.transform, 0.26f, SeamWarm);
+            parts.Left = NewSeam(go.transform, 0.16f, SeamCool);
+            parts.Right = NewSeam(go.transform, 0.16f, SeamCool);
             return go;
         }
 
@@ -116,6 +169,7 @@ namespace Starwick
             float step = ChunkLength / n;
 
             var verts = new Vector3[(n + 1) * 3];
+            var norms = new Vector3[(n + 1) * 3];
             var cols = new Color[(n + 1) * 3];
             var tris = new int[n * 12];
 
@@ -127,10 +181,10 @@ namespace Starwick
             for (int i = 0; i <= n; i++)
             {
                 float d = d0 + i * step;
-                Vector3 c = Track.Center(d);
-                Vector3 tan = Track.Tangent(d);
-                Vector3 right = Vector3.Cross(Vector3.up, tan).normalized;
-                right = Quaternion.AngleAxis(Track.Bank(d) * 1.25f, tan) * right;
+                var fr = Track.Sample(d);
+                Vector3 c = fr.Center;
+                Vector3 right = fr.Right;
+                Vector3 up = fr.Up;
                 float w = Track.Width(d) * 0.5f;
 
                 Vector3 lp = c - right * w;
@@ -138,19 +192,21 @@ namespace Starwick
                 verts[i * 3] = lp;
                 verts[i * 3 + 1] = c;
                 verts[i * 3 + 2] = rp;
+                norms[i * 3] = up;
+                norms[i * 3 + 1] = up;
+                norms[i * 3 + 2] = up;
 
                 float shade = 0.6f + 0.4f * Mathf.PerlinNoise(d * 0.05f, 0f);
-                float crest = Mathf.Clamp01((c.y - Track.Center(d - 6f).y) * 0.4f + 0.5f);
-                var edge = new Color(0.16f * shade, 0.2f * shade, 0.34f * shade, 1f);
-                var mid = Color.Lerp(edge, new Color(0.3f, 0.34f, 0.5f, 1f), crest);
+                var edge = new Color(0.16f * shade, 0.2f * shade, 0.34f * shade, 0.5f);
+                var midc = new Color(0.3f, 0.34f, 0.5f, 0.62f);
                 cols[i * 3] = edge;
-                cols[i * 3 + 1] = mid;
+                cols[i * 3 + 1] = midc;
                 cols[i * 3 + 2] = edge;
 
-                Vector3 up = Vector3.up * 0.04f;
-                centerPts[i] = c + up;
-                leftPts[i] = lp + up;
-                rightPts[i] = rp + up;
+                Vector3 lift = up * 0.05f;
+                centerPts[i] = c + lift;
+                leftPts[i] = lp + lift;
+                rightPts[i] = rp + lift;
             }
 
             int t = 0;
@@ -170,9 +226,9 @@ namespace Starwick
             m.Clear();
             m.indexFormat = IndexFormat.UInt16;
             m.vertices = verts;
+            m.normals = norms;
             m.colors = cols;
             m.triangles = tris;
-            m.RecalculateNormals();
             m.RecalculateBounds();
             LastChunkVertexCount = verts.Length;
 

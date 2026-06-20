@@ -14,6 +14,7 @@ namespace Starwick
         public Vector3 LookTarget;
         public bool HasLookTarget;
         public float Bank;
+        public Vector3 Forward = Vector3.forward;
 
         float shake;
         float bankCurrent;
@@ -56,10 +57,14 @@ namespace Starwick
         {
             Vector3 motorPos = t.Position;
 
-            Vector3 desired = motorPos + new Vector3(0f, 3.2f, -8.5f);
+            Vector3 fwd = Forward;
+            fwd.y = 0f;
+            fwd = fwd.sqrMagnitude > 0.0001f ? fwd.normalized : Vector3.forward;
+
+            Vector3 desired = motorPos - fwd * 8.5f + Vector3.up * 3.2f;
             transform.position = Vector3.Lerp(transform.position, desired, 1f - Mathf.Exp(-6f * dt));
 
-            Vector3 baseLook = motorPos + new Vector3(0f, 1f, 7f);
+            Vector3 baseLook = motorPos + fwd * 7f + Vector3.up * 1f;
             Vector3 lookAt = HasLookTarget
                 ? Vector3.Lerp(baseLook, LookTarget + Vector3.up * 0.6f, 0.35f)
                 : baseLook;

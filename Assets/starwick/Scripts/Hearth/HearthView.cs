@@ -14,6 +14,7 @@ namespace Starwick
         bool[] hasStructure;
         int structures;
         int pulseIndex = -1;
+        int pulsing = -1;
         float reactClock;
         ParticleSystem motes;
 
@@ -37,14 +38,25 @@ namespace Starwick
         static readonly Color Affordable = new Color(0.6f, 0.7f, 1.4f, 1f);
         static readonly Color Spire = new Color(2.2f, 1.7f, 0.9f, 1f);
 
+        static Color BaseColor(int i)
+        {
+            bool restored = HearthState.IsRestored(Order[i]);
+            bool core = Order[i] == HearthState.Node.RainikyoCore;
+            if (!restored) return Dormant;
+            return core ? Restored * 1.4f : Restored;
+        }
+
         public void Build()
         {
+            for (int i = transform.childCount - 1; i >= 0; i--) Destroy(transform.GetChild(i).gameObject);
+
             var unlit = Shader.Find("Universal Render Pipeline/Unlit");
             Nodes = new Transform[Order.Length];
             mats = new Material[Order.Length];
             baseScale = new Vector3[Order.Length];
             hasStructure = new bool[Order.Length];
             structures = 0;
+            pulsing = -1;
 
             for (int i = 0; i < Order.Length; i++)
             {
@@ -60,11 +72,10 @@ namespace Starwick
                 var col = go.GetComponent<Collider>();
                 if (col != null) Destroy(col);
                 go.transform.SetParent(transform, false);
-                go.transform.position = pos;
+                go.transform.localPosition = pos;
                 go.transform.localScale = Vector3.one * (core ? 1.8f : 1.1f);
 
-                var c = restored ? Restored : Dormant;
-                if (core && restored) c = Restored * 1.4f;
+                var c = BaseColor(i);
                 var m = new Material(unlit);
                 m.color = c;
                 m.SetColor("_BaseColor", c);
@@ -146,6 +157,18 @@ namespace Starwick
             return -1;
         }
 
+        void ResetNode(int i)
+        {
+            if (i < 0 || Nodes == null || i >= Nodes.Length || Nodes[i] == null) return;
+            Nodes[i].localScale = baseScale[i];
+            if (mats[i] != null)
+            {
+                var c = BaseColor(i);
+                mats[i].color = c;
+                mats[i].SetColor("_BaseColor", c);
+            }
+        }
+
         public void React(RunResults r)
         {
             Reacted = true;
@@ -154,12 +177,13 @@ namespace Starwick
             for (int i = 0; i < Order.Length; i++)
             {
                 bool restored = HearthState.IsRestored(Order[i]);
-                bool core = Order[i] == HearthState.Node.RainikyoCore;
-                var c = restored ? (core ? Restored * 1.4f : Restored) : Dormant;
+                var c = BaseColor(i);
                 if (mats[i] != null) { mats[i].color = c; mats[i].SetColor("_BaseColor", c); }
                 if (restored) GrowStructure(i);
             }
 
+            ResetNode(pulsing);
+            pulsing = -1;
             pulseIndex = NextAffordable();
 
             if (motes != null)
@@ -175,7 +199,14 @@ namespace Starwick
 
         void Update()
         {
-            if (pulseIndex < 0 || Nodes == null || pulseIndex >= Nodes.Length || Nodes[pulseIndex] == null) return;
+            if (Nodes == null) return;
+            if (pulseIndex != pulsing)
+            {
+                ResetNode(pulsing);
+                pulsing = pulseIndex;
+            }
+            if (pulseIndex < 0 || pulseIndex >= Nodes.Length || Nodes[pulseIndex] == null) return;
+
             reactClock += Time.deltaTime;
             float w = 0.5f + 0.5f * Mathf.Sin(reactClock * 3f);
             Nodes[pulseIndex].localScale = baseScale[pulseIndex] * (1f + 0.18f * w);

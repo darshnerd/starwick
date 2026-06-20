@@ -41,11 +41,27 @@ namespace Starwick
             Current.TotalStarsRelit += r.GatesRelit;
             Current.Starlight += r.Starlight;
 
-            int idx = Roster.IndexOf(Current.CurrentHollow);
-            if (idx >= 0 && Current.Bonds != null && idx < Current.Bonds.Length)
-                Current.Bonds[idx] += r.GatesRelit * 10 + r.BestChain * 5;
+            int idx = r.HollowIndex;
+            if (idx < 0 || idx >= Roster.All.Length) idx = Roster.IndexOf(Current.CurrentHollow);
+            if (idx >= 0 && idx < Roster.All.Length)
+            {
+                Current.CurrentHollow = Roster.All[idx].Name;
+                if (Current.Bonds != null && idx < Current.Bonds.Length)
+                    Current.Bonds[idx] += r.GatesRelit * 10 + r.BestChain * 5;
+            }
 
             Save();
+        }
+
+        public static void AddMemory(string memory)
+        {
+            if (Current == null) Load();
+            if (Current.MemoryArchive == null) Current.MemoryArchive = new System.Collections.Generic.List<string>();
+            if (!string.IsNullOrEmpty(memory) && !Current.MemoryArchive.Contains(memory))
+            {
+                Current.MemoryArchive.Add(memory);
+                Save();
+            }
         }
 
         static void Migrate(PlayerProfile p)

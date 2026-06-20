@@ -12,6 +12,8 @@ namespace Starwick
         public float Lift;
         public float Lane;
         public string Segment;
+        public int Branch;
+        public int Route;
     }
 
     public struct RampSpec
@@ -44,12 +46,15 @@ namespace Starwick
                     Nodes = 3, Spacing = 3f, Lift = 3.6f, Lane = i == 0 ? 0f : 1.4f, Segment = "airtime",
                 });
 
-            list.Add(new GateSpec
-            {
-                Distance = runLength * 0.58f,
-                Kind = ConstellationGate.Kind.SplitChoice,
-                Nodes = 1, Spacing = 0f, Lift = 1.0f, Lane = 2.6f, Segment = "split",
-            });
+            float[] branchLanes = { 0f, -3f, 3f, -6f };
+            string[] branchSeg = { "branch-safe", "branch-memory", "branch-eclipse", "branch-bond" };
+            for (int b = 0; b < 4; b++)
+                list.Add(new GateSpec
+                {
+                    Distance = runLength * 0.58f,
+                    Kind = ConstellationGate.Kind.SplitChoice,
+                    Nodes = 2, Spacing = 3f, Lift = 1.0f, Lane = branchLanes[b], Segment = branchSeg[b], Branch = 1, Route = b,
+                });
 
             for (int i = 0; i < 4; i++)
             {
